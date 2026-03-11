@@ -894,6 +894,11 @@ window._fbFns = { collection, addDoc, onSnapshot, doc, updateDoc, query, orderBy
     color: rgba(255,255,255,0.7) !important;
     padding: 4px 8px !important;
   }
+
+  /* STRIPED SELECT */
+  .select-striped { font-size: 14px; }
+  .qty-select-wrap { display: flex; gap: 6px; align-items: center; }
+  .qty-free-input { width: 64px !important; }
 </style>
 </head>
 <body>
@@ -982,6 +987,14 @@ window._fbFns = { collection, addDoc, onSnapshot, doc, updateDoc, query, orderBy
           <div style="margin-top:12px;font-size:12px;color:var(--text3);">
             Le template doit contenir les variables : <code style="color:var(--accent-light)">{{to_email}}</code> <code style="color:var(--accent-light)">{{to_name}}</code> <code style="color:var(--accent-light)">{{from_name}}</code> <code style="color:var(--accent-light)">{{message}}</code> <code style="color:var(--accent-light)">{{subject}}</code>
           </div>
+        </div>
+
+        <!-- Requester name -->
+        <div class="card card-blue">
+          <div class="card-title">👤 Qui fait la demande ?</div>
+          <select id="requester-name" class="select-striped">
+            <option value="">-- Sélectionnez votre prénom --</option>
+          </select>
         </div>
 
         <!-- Products -->
@@ -1085,6 +1098,12 @@ window._fbFns = { collection, addDoc, onSnapshot, doc, updateDoc, query, orderBy
 <div class="modal-overlay" id="refuse-modal">
   <div class="modal">
     <div class="modal-title">❌ Motif de refus</div>
+    <div class="form-row">
+      <label>Qui répond ?</label>
+      <select id="responder-name" class="select-striped">
+        <option value="">-- Votre prénom --</option>
+      </select>
+    </div>
     <div style="display:flex;flex-direction:column;gap:10px;" id="refuse-options">
       <div class="urgency-option" onclick="confirmRefuse('faux_stock')">
         <span class="urgency-icon">📦</span>
@@ -1103,6 +1122,36 @@ window._fbFns = { collection, addDoc, onSnapshot, doc, updateDoc, query, orderBy
   </div>
 </div>
 
+<!-- ACCEPT MODAL -->
+<div class="modal-overlay" id="accept-modal">
+  <div class="modal">
+    <div class="modal-title">✅ Confirmer la demande</div>
+    <div class="form-row">
+      <label>Qui répond ?</label>
+      <select id="accepter-name" class="select-striped">
+        <option value="">-- Votre prénom --</option>
+      </select>
+    </div>
+    <button class="btn btn-green" style="width:100%;margin-top:8px;justify-content:center;" onclick="confirmAccept()">✅ Confirmer la disponibilité</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:10px;justify-content:center;" onclick="closeAcceptModal()">Annuler</button>
+  </div>
+</div>
+
+<!-- READY MODAL -->
+<div class="modal-overlay" id="ready-modal">
+  <div class="modal">
+    <div class="modal-title">📦 Prêt à remettre</div>
+    <div class="form-row">
+      <label>Qui répond ?</label>
+      <select id="readyer-name" class="select-striped">
+        <option value="">-- Votre prénom --</option>
+      </select>
+    </div>
+    <button class="btn btn-gold" style="width:100%;margin-top:8px;justify-content:center;" onclick="confirmReady()">📦 Marquer comme prête</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:10px;justify-content:center;" onclick="closeReadyModal()">Annuler</button>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div id="toast"></div>
 
@@ -1113,6 +1162,14 @@ const PHARMACIES = {
   ROCHECHOUART:{ name: 'Rochechouart',email: 'ordoparis9@gmail.com',    color: '#b07d20' },
   STGEORGES:   { name: 'St-Georges', email: 'ordo@etik.com',            color: '#16a34a' },
   FONTAINE:    { name: 'Fontaine',   email: 'pharmacie@etik.com',       color: '#dc2626' },
+};
+
+
+const STAFF = {
+  FONTAINE:     ['Alexandre','Anas','Elodie','Elone','Firas','Mehdi','Miguel','Muriel','Nadiia','Richesse','Samba','Sokhna','Thinhinan','Valentine','Viviane'],
+  ROCHECHOUART: ['Aïcha','Beyram','Latifa','Mehdi','Muriel','Nassim','Thinhinan'],
+  CARDINET:     ['Alan','Catherine','Claire','Doha','Jérôme','Nicolas'],
+  STGEORGES:    ['Alessandra','Audrey'],
 };
 
 const URGENCY_LABELS = {
@@ -1164,6 +1221,7 @@ function init() {
   updateCurrentPharmaLabel();
   addProductLine();
   renderDestChips();
+  renderRequesterDropdown();
   checkPharmaWarning();
   updateInboxBadge();
 
@@ -1291,6 +1349,7 @@ function selectPharma(key) {
   renderDestChips();
   saveState();
   document.getElementById('pharma-modal').classList.remove('open');
+  renderRequesterDropdown();
   showToast(`✅ Connecté en tant que ${PHARMACIES[key].name}`, 'success');
   updateInboxBadge();
 }
@@ -1329,11 +1388,31 @@ function renderProductLines() {
     <div class="product-line">
       <input type="text" placeholder="Nom du produit ${i+1}" value="${line.name}"
         oninput="updateLine(${line.id}, 'name', this.value)">
-      <input type="number" min="1" max="99" value="${line.qty}"
-        oninput="updateLine(${line.id}, 'qty', parseInt(this.value)||1)">
+      <div class="qty-select-wrap">
+        <select class="select-striped" style="width:70px;padding:10px 6px;"
+          onchange="handleQtySelect(${line.id}, this)">
+          ${[1,2,3,4,5].map(n => `<option value="${n}" ${line.qty===n&&!line.freeQty?'selected':''}>${n}</option>`).join('')}
+          <option value="+" ${line.freeQty?'selected':''}>+</option>
+        </select>
+        ${line.freeQty ? `<input type="number" class="qty-free-input" min="1" max="999" value="${line.qty}"
+          oninput="updateLine(${line.id}, 'qty', parseInt(this.value)||1)" placeholder="Qté">` : ''}
+      </div>
       <button class="remove-btn" onclick="removeProductLine(${line.id})">×</button>
     </div>
   `).join('');
+}
+
+function handleQtySelect(id, sel) {
+  const line = state.productLines.find(l => l.id === id);
+  if (!line) return;
+  if (sel.value === '+') {
+    line.freeQty = true;
+    line.qty = 6;
+  } else {
+    line.freeQty = false;
+    line.qty = parseInt(sel.value);
+  }
+  renderProductLines();
 }
 
 function updateLine(id, field, value) {
@@ -1351,6 +1430,15 @@ function renderDestChips() {
            style="${state.destPharma === key ? `border-color:${p.color};color:${p.color};background:${p.color}22` : ''}"
            onclick="selectDest('${key}')">${p.name}</div>
     `).join('');
+  renderRequesterDropdown();
+}
+
+function renderRequesterDropdown() {
+  const sel = document.getElementById('requester-name');
+  if (!sel) return;
+  const members = state.currentPharma ? (STAFF[state.currentPharma] || []) : [];
+  sel.innerHTML = '<option value="">-- Sélectionnez votre prénom --</option>' +
+    members.map((name, i) => `<option value="${name}" style="background:${i%2===0?'#f5f4ff':'#ffffff'}">${name}</option>`).join('');
 }
 
 function selectDest(key) {
@@ -1379,10 +1467,15 @@ async function submitDemand() {
   btn.disabled = true;
   btn.innerHTML = '<div class="spinner"></div><span>Envoi en cours...</span>';
 
+  const requester = document.getElementById('requester-name').value;
+  if (!requester) { showToast('⚠️ Sélectionnez votre prénom', 'error');
+    btn.disabled = false; btn.innerHTML = '<span>Envoyer la demande</span>'; return; }
+
   const demand = {
     id: 'D' + Date.now(),
     from: state.currentPharma,
     to: state.destPharma,
+    requester,
     products: products.map(l => ({ name: l.name.trim(), qty: l.qty })),
     urgency: state.urgency,
     note: document.getElementById('note').value.trim(),
@@ -1391,6 +1484,7 @@ async function submitDemand() {
     statusAt: null,
     refuseReason: null,
     readyAt: null,
+    responder: null,
   };
 
   // Send email
@@ -1416,6 +1510,7 @@ async function submitDemand() {
   state.destPharma = null;
   state.urgency = null;
   document.getElementById('note').value = '';
+  document.getElementById('requester-name').value = '';
   document.querySelectorAll('.urgency-option').forEach(e => e.classList.remove('selected'));
   addProductLine();
   renderDestChips();
@@ -1452,7 +1547,7 @@ Réf. demande : ${demand.id}
 Date : ${formatDate(demand.createdAt)}
 
 👉 Connectez-vous pour confirmer ou refuser la demande :
-https://retrobyetikpharma.netlify.app/
+https://mehdifqwqfq.github.io/retropharm
   `.trim();
 
   await window.emailjs.send(cfg.service, cfg.template, {
@@ -1512,11 +1607,11 @@ function renderDemandCard(d, mode) {
   if (mode === 'inbox') {
     if (d.status === 'pending') {
       actionsHTML = `
-        <button class="btn btn-green btn-sm" onclick="acceptDemand('${d.id}')">✅ Confirmer</button>
+        <button class="btn btn-green btn-sm" onclick="openAcceptModal('${d.id}')">✅ Confirmer</button>
         <button class="btn btn-red btn-sm" onclick="openRefuseModal('${d.id}')">❌ Refuser</button>
       `;
     } else if (d.status === 'confirmed') {
-      actionsHTML = `<button class="btn btn-gold btn-sm" onclick="markReady('${d.id}')">📦 Prêt à remettre</button>`;
+      actionsHTML = `<button class="btn btn-gold btn-sm" onclick="openReadyModal('${d.id}')">📦 Prêt à remettre</button>`;
     }
   }
 
@@ -1526,8 +1621,10 @@ function renderDemandCard(d, mode) {
         <div>
           <div class="demand-route">
             <strong style="color:${from.color}">${from.name}</strong>
+            ${d.requester ? `<span style="color:var(--text3);font-size:11px;"> (${d.requester})</span>` : ''}
             <span style="color:var(--text3)"> → </span>
             <strong style="color:${to.color}">${to.name}</strong>
+            ${d.responder ? `<span style="color:var(--text3);font-size:11px;"> (${d.responder})</span>` : ''}
           </div>
           <div class="demand-time">${formatDate(d.createdAt)}</div>
         </div>
@@ -1563,40 +1660,77 @@ function getStatusBadge(status, reason) {
 }
 
 // ===== ACTIONS =====
-async function acceptDemand(id) {
-  const d = state.demands.find(d => d.id === id);
+function populateResponderSelect(selId) {
+  const sel = document.getElementById(selId);
+  const members = state.currentPharma ? (STAFF[state.currentPharma] || []) : [];
+  sel.innerHTML = '<option value="">-- Votre prénom --</option>' +
+    members.map((name, i) => `<option value="${name}" style="background:${i%2===0?'#f5f4ff':'#ffffff'}">${name}</option>`).join('');
+}
+
+// ACCEPT
+let acceptingDemandId = null;
+function openAcceptModal(id) {
+  acceptingDemandId = id;
+  populateResponderSelect('accepter-name');
+  document.getElementById('accept-modal').classList.add('open');
+}
+function closeAcceptModal() {
+  document.getElementById('accept-modal').classList.remove('open');
+  acceptingDemandId = null;
+}
+async function confirmAccept() {
+  const responder = document.getElementById('accepter-name').value;
+  if (!responder) { showToast('⚠️ Sélectionnez votre prénom', 'error'); return; }
+  const d = state.demands.find(d => d.id === acceptingDemandId);
   if (!d) return;
-  await fbUpdateDemand(d.fbId, { status: 'confirmed', statusAt: new Date().toISOString() });
+  await fbUpdateDemand(d.fbId, { status: 'confirmed', statusAt: new Date().toISOString(), responder });
+  closeAcceptModal();
   launchConfetti();
   vibrateDevice([50, 30, 80]);
-  showToast('✅ Demande confirmée', 'success');
+  showToast(`✅ Confirmé par ${responder}`, 'success');
 }
 
+// REFUSE
 function openRefuseModal(id) {
   state.refusingDemandId = id;
+  populateResponderSelect('responder-name');
   document.getElementById('refuse-modal').classList.add('open');
 }
-
 function closeRefuseModal() {
   document.getElementById('refuse-modal').classList.remove('open');
   state.refusingDemandId = null;
 }
-
 async function confirmRefuse(reason) {
+  const responder = document.getElementById('responder-name').value;
+  if (!responder) { showToast('⚠️ Sélectionnez votre prénom', 'error'); return; }
   const d = state.demands.find(d => d.id === state.refusingDemandId);
   if (!d) return;
-  await fbUpdateDemand(d.fbId, { status: 'refused', refuseReason: reason, statusAt: new Date().toISOString() });
+  await fbUpdateDemand(d.fbId, { status: 'refused', refuseReason: reason, statusAt: new Date().toISOString(), responder });
   closeRefuseModal();
-  showToast('Demande refusée : ' + REFUSE_LABELS[reason], 'error');
+  showToast(`Refusé par ${responder} : ` + REFUSE_LABELS[reason], 'error');
 }
 
-async function markReady(id) {
-  const d = state.demands.find(d => d.id === id);
+// READY
+let readyingDemandId = null;
+function openReadyModal(id) {
+  readyingDemandId = id;
+  populateResponderSelect('readyer-name');
+  document.getElementById('ready-modal').classList.add('open');
+}
+function closeReadyModal() {
+  document.getElementById('ready-modal').classList.remove('open');
+  readyingDemandId = null;
+}
+async function confirmReady() {
+  const responder = document.getElementById('readyer-name').value;
+  if (!responder) { showToast('⚠️ Sélectionnez votre prénom', 'error'); return; }
+  const d = state.demands.find(d => d.id === readyingDemandId);
   if (!d) return;
-  await fbUpdateDemand(d.fbId, { status: 'ready', readyAt: new Date().toISOString() });
+  await fbUpdateDemand(d.fbId, { status: 'ready', readyAt: new Date().toISOString(), responder });
+  closeReadyModal();
   launchConfetti();
   vibrateDevice([50, 30, 80]);
-  showToast('📦 Rétrocession marquée comme prête !', 'success');
+  showToast(`📦 Prêt — confirmé par ${responder}`, 'success');
 }
 
 // ===== HISTORY =====
@@ -1614,8 +1748,10 @@ function renderHistory() {
           <div class="history-meta">${formatDate(d.createdAt)} · ${d.id}</div>
           <div class="history-summary">
             <strong style="color:${from.color}">${from.name}</strong>
+            ${d.requester ? `<span style="color:var(--text3);font-size:11px;"> (${d.requester})</span>` : ''}
             <span style="color:var(--text3)"> → </span>
             <strong style="color:${to.color}">${to.name}</strong>
+            ${d.responder ? `<span style="color:var(--text3);font-size:11px;"> (${d.responder})</span>` : ''}
           </div>
           <div class="history-products">${d.products.map(p => `${p.qty}× ${p.name}`).join(' · ')}</div>
           <div style="margin-top:6px;font-size:11px;color:var(--text3);">${URGENCY_LABELS[d.urgency]}</div>
@@ -1656,6 +1792,12 @@ document.getElementById('pharma-modal').addEventListener('click', function(e) {
 });
 document.getElementById('refuse-modal').addEventListener('click', function(e) {
   if (e.target === this) closeRefuseModal();
+});
+document.getElementById('accept-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeAcceptModal();
+});
+document.getElementById('ready-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeReadyModal();
 });
 
 // ===== GRAFFITI WALL =====
