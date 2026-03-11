@@ -899,11 +899,70 @@ window._fbFns = { collection, addDoc, onSnapshot, doc, updateDoc, query, orderBy
   .select-striped { font-size: 14px; }
   .qty-select-wrap { display: flex; gap: 6px; align-items: center; }
   .qty-free-input { width: 64px !important; }
+
+  /* PASSWORD SCREEN */
+  #password-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  #password-screen.hidden { display: none; }
+  .password-card {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 24px;
+    padding: 40px 32px;
+    width: 100%;
+    max-width: 380px;
+    text-align: center;
+    box-shadow: 0 16px 48px rgba(70,30,150,0.1);
+  }
+  .password-icon { font-size: 48px; margin-bottom: 16px; }
+  .password-title { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .password-sub { font-size: 14px; color: var(--text2); margin-bottom: 28px; }
+  .password-input-wrap {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .password-input-wrap input {
+    flex: 1;
+    font-size: 16px;
+    padding: 13px 16px;
+    border-radius: 12px;
+    letter-spacing: 2px;
+  }
+  .password-error {
+    font-size: 13px;
+    color: var(--red);
+    min-height: 20px;
+    margin-bottom: 8px;
+  }
 </style>
 </head>
 <body>
 
 <canvas id="graffiti-canvas"></canvas>
+<!-- PASSWORD SCREEN -->
+<div id="password-screen">
+  <div class="password-card">
+    <div class="password-icon">💊</div>
+    <div class="password-title">Rétro<span style="color:var(--accent-light)">Pharm</span></div>
+    <div class="password-sub">Accès réservé au réseau de pharmacies</div>
+    <div class="password-input-wrap">
+      <input type="password" id="pwd-input" placeholder="Mot de passe"
+        onkeydown="if(event.key==='Enter') checkPassword()">
+      <button class="btn btn-primary" style="width:auto;padding:13px 20px;" onclick="checkPassword()">→</button>
+    </div>
+    <div class="password-error" id="pwd-error"></div>
+  </div>
+</div>
+
 <canvas id="confetti-canvas"></canvas>
 <div id="install-banner">
   <span>📱 Installer RétroPharm sur votre écran d'accueil</span>
@@ -1909,6 +1968,61 @@ function setDailyQuote() {
   const dayIndex = Math.floor(Date.now() / 86400000) % QUOTES.length;
   document.getElementById('daily-quote').textContent = QUOTES[dayIndex];
 }
+// ===== PASSWORD =====
+const PWD_HASH = '5a822346c733b8f8b97bbf05b99e1ac9'; // MD5("Homer")
+const PWD_KEY = 'retropharm_auth';
+const PWD_TTL = 86400000; // 24h
+
+function md5(s){function n(a,b){return(a&0xFFFF)+(b&0xFFFF)|((((a>>16)+(b>>16)+(((a&0xFFFF)+(b&0xFFFF))>>16))<<16))}function r(a,b){return a<<b|a>>>(32-b)}function cmn(q,a,b,x,s,t){return n(r(n(n(a,q),n(x,t)),s),b)}function ff(a,b,c,d,x,s,t){return cmn(b&c|~b&d,a,b,x,s,t)}function gg(a,b,c,d,x,s,t){return cmn(b&d|c&~d,a,b,x,s,t)}function hh(a,b,c,d,x,s,t){return cmn(b^c^d,a,b,x,s,t)}function ii(a,b,c,d,x,s,t){return cmn(c^(b|~d),a,b,x,s,t)}function he(n){var t='';for(var i=0;i<4;i++)t+='0123456789abcdef'.charAt(n>>i*8+4&0xF)+'0123456789abcdef'.charAt(n>>i*8&0xF);return t}
+s=unescape(encodeURIComponent(s));var M=[];for(var i=0;i<s.length;i++)M[i>>2]|=s.charCodeAt(i)<<(i%4*8);M[s.length>>2]|=0x80<<(s.length%4*8);M[(((s.length+8)>>6)<<4)+14]=s.length*8;
+var a=1732584193,b=-271733879,c=-1732584194,d=271733878;
+for(var i=0;i<M.length;i+=16){var A=a,B=b,C=c,D=d;
+a=ff(a,b,c,d,M[i+0],7,-680876936);d=ff(d,a,b,c,M[i+1],12,-389564586);c=ff(c,d,a,b,M[i+2],17,606105819);b=ff(b,c,d,a,M[i+3],22,-1044525330);
+a=ff(a,b,c,d,M[i+4],7,-176418897);d=ff(d,a,b,c,M[i+5],12,1200080426);c=ff(c,d,a,b,M[i+6],17,-1473231341);b=ff(b,c,d,a,M[i+7],22,-45705983);
+a=ff(a,b,c,d,M[i+8],7,1770035416);d=ff(d,a,b,c,M[i+9],12,-1958414417);c=ff(c,d,a,b,M[i+10],17,-42063);b=ff(b,c,d,a,M[i+11],22,-1990404162);
+a=ff(a,b,c,d,M[i+12],7,1804603682);d=ff(d,a,b,c,M[i+13],12,-40341101);c=ff(c,d,a,b,M[i+14],17,-1502002290);b=ff(b,c,d,a,M[i+15],22,1236535329);
+a=gg(a,b,c,d,M[i+1],5,-165796510);d=gg(d,a,b,c,M[i+6],9,-1069501632);c=gg(c,d,a,b,M[i+11],14,643717713);b=gg(b,c,d,a,M[i+0],20,-373897302);
+a=gg(a,b,c,d,M[i+5],5,-701558691);d=gg(d,a,b,c,M[i+10],9,38016083);c=gg(c,d,a,b,M[i+15],14,-660478335);b=gg(b,c,d,a,M[i+4],20,-405537848);
+a=gg(a,b,c,d,M[i+9],5,568446438);d=gg(d,a,b,c,M[i+14],9,-1019803690);c=gg(c,d,a,b,M[i+3],14,-187363961);b=gg(b,c,d,a,M[i+8],20,1163531501);
+a=gg(a,b,c,d,M[i+13],5,-1444681467);d=gg(d,a,b,c,M[i+2],9,-51403784);c=gg(c,d,a,b,M[i+7],14,1735328473);b=gg(b,c,d,a,M[i+12],20,-1926607734);
+a=hh(a,b,c,d,M[i+5],4,-378558);d=hh(d,a,b,c,M[i+8],11,-2022574463);c=hh(c,d,a,b,M[i+11],16,1839030562);b=hh(b,c,d,a,M[i+14],23,-35309556);
+a=hh(a,b,c,d,M[i+1],4,-1530992060);d=hh(d,a,b,c,M[i+4],11,1272893353);c=hh(c,d,a,b,M[i+7],16,-155497632);b=hh(b,c,d,a,M[i+10],23,-1094730640);
+a=hh(a,b,c,d,M[i+13],4,681279174);d=hh(d,a,b,c,M[i+0],11,-358537222);c=hh(c,d,a,b,M[i+3],16,-722521979);b=hh(b,c,d,a,M[i+6],23,76029189);
+a=hh(a,b,c,d,M[i+9],4,-640364487);d=hh(d,a,b,c,M[i+12],11,-421815835);c=hh(c,d,a,b,M[i+15],16,530742520);b=hh(b,c,d,a,M[i+2],23,-995338651);
+a=ii(a,b,c,d,M[i+0],6,-198630844);d=ii(d,a,b,c,M[i+7],10,1126891415);c=ii(c,d,a,b,M[i+14],15,-1416354905);b=ii(b,c,d,a,M[i+5],21,-57434055);
+a=ii(a,b,c,d,M[i+12],6,1700485571);d=ii(d,a,b,c,M[i+3],10,-1894986606);c=ii(c,d,a,b,M[i+10],15,-1051523);b=ii(b,c,d,a,M[i+1],21,-2054922799);
+a=ii(a,b,c,d,M[i+8],6,1873313359);d=ii(d,a,b,c,M[i+15],10,-30611744);c=ii(c,d,a,b,M[i+6],15,-1560198380);b=ii(b,c,d,a,M[i+13],21,1309151649);
+a=ii(a,b,c,d,M[i+4],6,-145523070);d=ii(d,a,b,c,M[i+11],10,-1120210379);c=ii(c,d,a,b,M[i+2],15,718787259);b=ii(b,c,d,a,M[i+9],21,-343485551);
+a=n(a,A);b=n(b,B);c=n(c,C);d=n(d,D);}
+return he(a)+he(b)+he(c)+he(d);}
+
+function checkPassword() {
+  const input = document.getElementById('pwd-input').value;
+  if (md5(input) === PWD_HASH) {
+    Storage.set(PWD_KEY, JSON.stringify({ ts: Date.now() }));
+    document.getElementById('password-screen').classList.add('hidden');
+    document.getElementById('pwd-error').textContent = '';
+  } else {
+    document.getElementById('pwd-error').textContent = '❌ Mot de passe incorrect';
+    document.getElementById('pwd-input').value = '';
+    document.getElementById('pwd-input').focus();
+  }
+}
+
+function checkAuth() {
+  try {
+    const saved = Storage.get(PWD_KEY);
+    if (saved) {
+      const { ts } = JSON.parse(saved);
+      if (Date.now() - ts < PWD_TTL) {
+        document.getElementById('password-screen').classList.add('hidden');
+        return;
+      }
+    }
+  } catch(e) {}
+}
+
+checkAuth();
 setDailyQuote();
 init();
 autoDetectView();
