@@ -3,36 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>RétroPharm — Gestion des rétrocessions</title>
+<title>RétroPharm</title>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="RétroPharm">
 <meta name="theme-color" content="#461E96">
 <link rel="manifest" href="data:application/json,%7B%22name%22%3A%22R%C3%A9troPharm%22%2C%22short_name%22%3A%22R%C3%A9troPharm%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f5f6fa%22%2C%22theme_color%22%3A%22%23461E96%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%252096%252096%2527%253E%253Crect%2520width%3D%252796%2527%2520height%3D%252796%2527%2520rx%3D%252722%2527%2520fill%3D%2527%2523461E96%2527%2F%253E%253Ctext%2520x%3D%252748%2527%2520y%3D%252768%2527%2520text-anchor%3D%2527middle%2527%2520font-size%3D%252752%2527%253E%25F0%259F%2592%258A%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<script type="module">
-// ===== FIREBASE =====
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyA8AEv_Av_oSDF5YWdjPLERV55UNpT7XSc",
-  authDomain: "retrobyetikpharma.firebaseapp.com",
-  projectId: "retrobyetikpharma",
-  storageBucket: "retrobyetikpharma.firebasestorage.app",
-  messagingSenderId: "875891564779",
-  appId: "1:875891564779:web:20835b6c8faef8c59d9eae"
-};
-
-const firebaseApp = initializeApp(firebaseConfig);
-const db = getFirestore(firebaseApp);
-
-// Expose to global scope for use in non-module functions
-window._db = db;
-window._fbFns = { collection, addDoc, onSnapshot, doc, updateDoc, query, orderBy };
-</script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&family=Caveat:wght@400;500;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #f5f6fa;
@@ -365,6 +342,32 @@ window._fbFns = { collection, addDoc, onSnapshot, doc, updateDoc, query, orderBy
     gap: 8px;
     flex-wrap: wrap;
   }
+  .dest-radio-label {
+    display: inline-flex;
+    align-items: center;
+    padding: 9px 18px;
+    border-radius: 100px;
+    border: 2px solid var(--border1);
+    background: transparent;
+    color: var(--text2);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .dest-radio-label input[type="radio"] { display: none; }
+  .dest-radio-label:hover {
+    border-color: var(--chip-color, var(--accent2));
+    color: var(--chip-color, var(--accent));
+    background: rgba(0,0,0,0.03);
+  }
+  .dest-radio-label:has(input:checked) {
+    border-color: var(--chip-color, var(--accent2));
+    background: color-mix(in srgb, var(--chip-color, #461E96) 12%, transparent);
+    color: var(--chip-color, var(--accent));
+  }
   .chip {
     padding: 9px 16px;
     border-radius: 100px;
@@ -650,18 +653,60 @@ window._fbFns = { collection, addDoc, onSnapshot, doc, updateDoc, query, orderBy
     background: var(--bg2);
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 16px 20px;
-    margin-bottom: 8px;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 12px;
-    align-items: center;
+    margin-bottom: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: box-shadow 0.15s;
   }
-  .history-meta {
-    font-size: 12px;
+  .history-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .history-collapsed {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    flex-wrap: wrap;
+  }
+  .history-collapsed .h-date {
+    font-size: 11px;
     color: var(--text3);
     font-family: 'DM Mono', monospace;
-    margin-bottom: 4px;
+    white-space: nowrap;
+    min-width: 80px;
+  }
+  .history-collapsed .h-route {
+    font-size: 13px;
+    font-weight: 600;
+    flex: 1;
+    min-width: 120px;
+  }
+  .history-collapsed .h-product {
+    font-size: 12px;
+    color: var(--text2);
+    flex: 1;
+    min-width: 100px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+  }
+  .history-collapsed .h-chevron {
+    font-size: 11px;
+    color: var(--text3);
+    transition: transform 0.2s;
+    margin-left: auto;
+  }
+  .history-item.expanded .h-chevron { transform: rotate(180deg); }
+  .history-expanded {
+    display: none;
+    padding: 0 14px 12px 14px;
+    border-top: 1px solid var(--border);
+  }
+  .history-item.expanded .history-expanded { display: block; }
+  .history-meta {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+    margin: 8px 0 4px;
   }
   .history-summary { font-size: 14px; font-weight: 500; }
   .history-products { font-size: 12px; color: var(--text2); margin-top: 4px; }
@@ -898,6 +943,9 @@ window._fbFns = { collection, addDoc, onSnapshot, doc, updateDoc, query, orderBy
   /* STRIPED SELECT */
   .select-striped { font-size: 14px; }
   .qty-select-wrap { display: flex; gap: 6px; align-items: center; }
+  .qty-input-free { width: 64px; padding: 6px 8px; border: 1.5px solid var(--border1); border-radius: 8px; font-size: 14px; background: var(--bg1); color: var(--text1); font-family: inherit; }
+  .qty-back-btn { background: none; border: 1.5px solid var(--border1); border-radius: 8px; padding: 5px 9px; cursor: pointer; font-size: 13px; color: var(--text2); }
+  .qty-back-btn:hover { background: var(--bg2); }
   .qty-free-input { width: 64px !important; }
 
   /* PASSWORD SCREEN */
@@ -944,32 +992,50 @@ window._fbFns = { collection, addDoc, onSnapshot, doc, updateDoc, query, orderBy
     margin-bottom: 8px;
   }
 </style>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyA8AEv_Av_oSDF5YWdjPLERV55UNpT7XSc",
+  authDomain: "retrobyetikpharma.firebaseapp.com",
+  projectId: "retrobyetikpharma",
+  storageBucket: "retrobyetikpharma.firebasestorage.app",
+  messagingSenderId: "875891564779",
+  appId: "1:875891564779:web:20835b6c8faef8c59d9eae"
+};
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+window._db    = db;
+window._fbFns = { collection, addDoc, onSnapshot, doc, updateDoc, query, orderBy };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&family=Caveat:wght@400;500;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<canvas id="graffiti-canvas"></canvas>
 <!-- PASSWORD SCREEN -->
 <div id="password-screen">
-  <div class="password-card">
-    <div class="password-icon">💊</div>
-    <div class="password-title">Rétro<span style="color:var(--accent-light)">Pharm</span></div>
-    <div class="password-sub">Accès réservé au réseau de pharmacies</div>
-    <div class="password-input-wrap">
-      <input type="password" id="pwd-input" placeholder="Mot de passe"
-        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-        onkeydown="if(event.key==='Enter') checkPassword()">
-      <button class="btn btn-primary" style="width:auto;padding:13px 20px;" onclick="checkPassword()">→</button>
-    </div>
-    <div class="password-error" id="pwd-error"></div>
+  <div class="password-box">
+    <div class="logo-icon" style="font-size:48px;margin-bottom:16px;">💊</div>
+    <div style="font-size:22px;font-weight:700;margin-bottom:8px;">RétroPharm</div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:24px;">Accès réservé au réseau Etik Pharma</div>
+    <input type="password" id="pwd-input" placeholder="Mot de passe"
+      autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <div id="pwd-error" style="color:#dc2626;font-size:13px;margin-top:8px;min-height:18px;"></div>
+    <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="checkPassword()">Accéder →</button>
   </div>
 </div>
 
-<canvas id="confetti-canvas"></canvas>
+<!-- PWA INSTALL BANNER -->
 <div id="install-banner">
   <span>📱 Installer RétroPharm sur votre écran d'accueil</span>
-  <button onclick="installPWA()">Installer</button>
-  <button id="install-dismiss" onclick="dismissInstall()">✕</button>
+  <button id="install-pwa-btn">Installer</button>
+  <button id="install-dismiss-btn">✕</button>
 </div>
+
+<canvas id="confetti-canvas"></canvas>
+<div id="toast"></div>
+
 <div id="app">
   <!-- HEADER -->
   <div class="header">
@@ -981,171 +1047,141 @@ window._fbFns = { collection, addDoc, onSnapshot, doc, updateDoc, query, orderBy
       </div>
     </div>
     <div class="header-right">
-      <div class="pharma-badge" onclick="openPharmaSelector()">
+      <div class="pharma-badge" id="pharma-badge-btn">
         <div class="pharma-dot"></div>
         <span id="current-pharma-label">Choisir ma pharmacie</span>
         <span style="color:var(--text3)">▾</span>
       </div>
       <div class="view-toggle">
-        <button class="view-btn active" id="btn-desktop" onclick="setView('desktop')">🖥</button>
-        <button class="view-btn" id="btn-mobile" onclick="setView('mobile')">📱</button>
+        <button class="view-btn active" id="btn-desktop">🖥</button>
+        <button class="view-btn" id="btn-mobile">📱</button>
       </div>
     </div>
   </div>
 
   <!-- NAV -->
   <div class="nav">
-    <button class="nav-btn active" id="nav-new" onclick="showTab('new')">Nouvelle demande</button>
-    <button class="nav-btn" id="nav-inbox" onclick="showTab('inbox')">
+    <button class="nav-btn active" id="nav-new">Nouvelle demande</button>
+    <button class="nav-btn" id="nav-inbox">
       Mes demandes reçues <span class="nav-badge" id="inbox-badge" style="display:none">0</span>
     </button>
-    <button class="nav-btn" id="nav-sent" onclick="showTab('sent')">Demandes envoyées</button>
-    <button class="nav-btn" id="nav-history" onclick="showTab('history')">Historique</button>
+    <button class="nav-btn" id="nav-sent">Demandes envoyées</button>
+    <button class="nav-btn" id="nav-history">Historique</button>
   </div>
 
   <!-- MAIN -->
   <div class="main">
 
-    <!-- ===== TAB: NOUVELLE DEMANDE ===== -->
+    <!-- TAB: NOUVELLE DEMANDE -->
     <div id="tab-new">
       <div class="section-title">Nouvelle rétrocession</div>
       <div class="section-sub">Créez une demande de rétrocession vers une autre pharmacie du réseau.</div>
-
-      <!-- Pharmacy not selected warning -->
-      <div id="no-pharma-warning" class="card" style="border-color: var(--orange); background: rgba(249,115,22,0.05); display:none;">
+      <div id="no-pharma-warning" class="card" style="border-color:var(--orange);background:rgba(249,115,22,0.05);display:none;">
         <div style="display:flex;align-items:center;gap:12px;">
           <span style="font-size:24px;">⚠️</span>
           <div>
             <div style="font-weight:700;margin-bottom:4px;">Identifiez votre pharmacie d'abord</div>
-            <div style="font-size:13px;color:var(--text2);">Cliquez sur le badge en haut à droite pour sélectionner votre pharmacie.</div>
+            <div style="font-size:13px;color:var(--text2);">Cliquez sur le badge en haut à droite.</div>
           </div>
         </div>
       </div>
-
       <div id="form-container">
-        <!-- EmailJS Config -->
-        <div class="config-note" id="emailjs-notice">
-          ⚙️ <strong>Configuration EmailJS requise</strong> — Renseignez votre Public Key, Service ID et Template ID ci-dessous pour activer l'envoi réel de mails. <a href="https://www.emailjs.com" target="_blank" style="color:var(--gold2);">Créer un compte gratuit →</a>
+        <div class="config-note" id="emailjs-notice" style="display:none"></div>
+        <div class="card card-teal" id="emailjs-config-card" style="display:none">
+          <input type="text" id="ejs-pubkey">
+          <input type="text" id="ejs-service">
+          <input type="text" id="ejs-template">
         </div>
-
-        <div class="card card-teal" id="emailjs-config-card">
-          <div class="card-title">⚙️ Config EmailJS (à faire une fois)</div>
-          <div class="form-row">
-            <label>Public Key EmailJS</label>
-            <input type="text" id="ejs-pubkey" placeholder="ex: ABCdef123..." oninput="saveEmailJSConfig()">
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <div class="form-row" style="margin:0">
-              <label>Service ID</label>
-              <input type="text" id="ejs-service" placeholder="service_xxx" oninput="saveEmailJSConfig()">
-            </div>
-            <div class="form-row" style="margin:0">
-              <label>Template ID</label>
-              <input type="text" id="ejs-template" placeholder="template_xxx" oninput="saveEmailJSConfig()">
-            </div>
-          </div>
-          <div style="margin-top:12px;font-size:12px;color:var(--text3);">
-            Le template doit contenir les variables : <code style="color:var(--accent-light)">{{to_email}}</code> <code style="color:var(--accent-light)">{{to_name}}</code> <code style="color:var(--accent-light)">{{from_name}}</code> <code style="color:var(--accent-light)">{{message}}</code> <code style="color:var(--accent-light)">{{subject}}</code>
-          </div>
-        </div>
-
-        <!-- Requester name -->
         <div class="card card-blue">
           <div class="card-title">👤 Qui fait la demande ?</div>
           <select id="requester-name" class="select-striped">
             <option value="">-- Sélectionnez votre prénom --</option>
           </select>
         </div>
-
-        <!-- Products -->
         <div class="card card-blue">
           <div class="card-title">📦 Produits demandés</div>
-          <div id="product-lines">
-            <!-- injected -->
-          </div>
-          <button class="add-line-btn" onclick="addProductLine()">+ Ajouter un produit</button>
+          <div id="product-lines"></div>
+          <button class="add-line-btn" id="add-line-btn">+ Ajouter un produit</button>
         </div>
-
-        <!-- Destination -->
         <div class="card card-purple">
           <div class="card-title">🏪 Demander à quelle pharmacie ?</div>
-          <div class="pharma-chips" id="dest-chips">
-            <!-- injected -->
-          </div>
+          <div class="pharma-chips" id="dest-chips"></div>
         </div>
-
-        <!-- Urgency -->
         <div class="card card-amber">
           <div class="card-title">⏱ Mode de récupération</div>
-          <div class="urgency-options">
-            <div class="urgency-option urgent" data-value="urgent" onclick="selectUrgency(this)">
+          <div class="urgency-options" id="urgency-options">
+            <div class="urgency-option urgent" data-value="urgent">
               <span class="urgency-icon">🚨</span>
               <div>
                 <div class="urgency-label" style="color:var(--red);">Urgent — on passe le prendre</div>
-                <div class="urgency-sub">Nous venons chercher le produit immédiatement</div>
+                <div class="urgency-sub">Merci de faire la facture</div>
               </div>
             </div>
-            <div class="urgency-option normal" data-value="mg" onclick="selectUrgency(this)">
-              <span class="urgency-icon">🤝</span>
-              <div>
-                <div class="urgency-label" style="color:var(--gold2);">Non urgent — à donner à MG</div>
-                <div class="urgency-sub">Remettre à Mehdi Gharbi lors de son passage</div>
-              </div>
-            </div>
-            <div class="urgency-option normal" data-value="tomorrow" onclick="selectUrgency(this)">
+            <div class="urgency-option normal" data-value="tomorrow">
               <span class="urgency-icon">📅</span>
               <div>
-                <div class="urgency-label" style="color:var(--green);">Non urgent — sera récupéré demain</div>
-                <div class="urgency-sub">Mise de côté, récupération le lendemain</div>
+                <div class="urgency-label" style="color:var(--green);">Non urgent — récupéré ou déposé demain</div>
+                <div class="urgency-sub">Merci de faire la facture</div>
+              </div>
+            </div>
+            <div class="urgency-option normal" data-value="patient">
+              <span class="urgency-icon">🚶</span>
+              <div>
+                <div class="urgency-label" style="color:var(--gold2);">Patient(e) en route</div>
+                <div class="urgency-sub">Merci de facturer directement au comptoir</div>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- Note -->
+        <div class="card card-gold" id="patient-name-card" style="display:none;">
+          <div class="card-title">🧑‍⚕️ Nom du / de la patient(e)</div>
+          <input type="text" id="patient-name" placeholder="Prénom et nom du patient(e)" autocomplete="off">
+        </div>
         <div class="card card-rose">
           <div class="card-title">💬 Note complémentaire (optionnel)</div>
           <textarea id="note" rows="2" placeholder="Informations supplémentaires..."></textarea>
         </div>
-
-        <button class="btn btn-primary" id="submit-btn" onclick="submitDemand()">
+        <button class="btn btn-primary" id="submit-btn">
           <span>Envoyer la demande</span>
         </button>
       </div>
     </div>
 
-    <!-- ===== TAB: INBOX ===== -->
+    <!-- TAB: INBOX -->
     <div id="tab-inbox" style="display:none;">
       <div class="section-title">Demandes reçues</div>
       <div class="section-sub">Confirmez ou refusez les demandes adressées à votre pharmacie.</div>
-      <div class="filter-row" id="inbox-filters">
-        <button class="filter-chip active" onclick="filterInbox('all', this)">Toutes</button>
-        <button class="filter-chip" onclick="filterInbox('pending', this)">En attente</button>
-        <button class="filter-chip" onclick="filterInbox('confirmed', this)">Confirmées</button>
-        <button class="filter-chip" onclick="filterInbox('ready', this)">Prêtes</button>
-        <button class="filter-chip" onclick="filterInbox('refused', this)">Refusées</button>
-      </div>
       <div id="inbox-list"></div>
     </div>
 
-    <!-- ===== TAB: SENT ===== -->
+    <!-- TAB: SENT -->
     <div id="tab-sent" style="display:none;">
       <div class="section-title">Demandes envoyées</div>
       <div class="section-sub">Suivez vos demandes en cours.</div>
       <div id="sent-list"></div>
     </div>
 
-    <!-- ===== TAB: HISTORY ===== -->
+    <!-- TAB: HISTORY -->
     <div id="tab-history" style="display:none;">
       <div class="section-title">Historique complet</div>
       <div class="section-sub">Toutes les demandes archivées du réseau.</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+        <div class="filter-row" id="history-filters">
+          <button class="filter-chip active" data-filter="all">Toutes</button>
+          <button class="filter-chip" data-filter="pending">En attente</button>
+          <button class="filter-chip" data-filter="confirmed">Confirmées</button>
+          <button class="filter-chip" data-filter="ready">Prêtes</button>
+          <button class="filter-chip" data-filter="refused">Refusées</button>
+        </div>
+        <button class="btn btn-red btn-sm" style="font-size:12px;padding:6px 12px;" id="purge-btn">🗑 Purger clôturées</button>
+      </div>
       <div id="history-list"></div>
     </div>
 
   </div>
 </div>
 
-<!-- PHARMA SELECTOR MODAL -->
+<!-- MODALS -->
 <div class="modal-overlay" id="pharma-modal">
   <div class="modal">
     <div class="modal-title">🏪 Quelle pharmacie êtes-vous ?</div>
@@ -1154,76 +1190,63 @@ window._fbFns = { collection, addDoc, onSnapshot, doc, updateDoc, query, orderBy
   </div>
 </div>
 
-<!-- REFUSE MODAL -->
 <div class="modal-overlay" id="refuse-modal">
   <div class="modal">
     <div class="modal-title">❌ Motif de refus</div>
     <div class="form-row">
       <label>Qui répond ?</label>
-      <select id="responder-name" class="select-striped">
-        <option value="">-- Votre prénom --</option>
-      </select>
+      <select id="responder-name" class="select-striped"><option value="">-- Votre prénom --</option></select>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;" id="refuse-options">
-      <div class="urgency-option" onclick="confirmRefuse('faux_stock')">
+      <div class="urgency-option" data-refuse="faux_stock">
         <span class="urgency-icon">📦</span>
         <div><div class="urgency-label">Faux stock</div><div class="urgency-sub">Le produit n'est pas physiquement en stock</div></div>
       </div>
-      <div class="urgency-option" onclick="confirmRefuse('pas_assez')">
+      <div class="urgency-option" data-refuse="pas_assez">
         <span class="urgency-icon">📉</span>
         <div><div class="urgency-label">Pas assez en stock</div><div class="urgency-sub">Stock insuffisant pour la quantité demandée</div></div>
       </div>
-      <div class="urgency-option" onclick="confirmRefuse('pas_temps')">
+      <div class="urgency-option" data-refuse="pas_temps">
         <span class="urgency-icon">⏰</span>
         <div><div class="urgency-label">Pas le temps</div><div class="urgency-sub">Impossible de préparer la rétrocession maintenant</div></div>
       </div>
     </div>
-    <button class="btn btn-outline" style="width:100%;margin-top:16px;justify-content:center;" onclick="closeRefuseModal()">Annuler</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:16px;justify-content:center;" id="close-refuse-btn">Annuler</button>
   </div>
 </div>
 
-<!-- ACCEPT MODAL -->
 <div class="modal-overlay" id="accept-modal">
   <div class="modal">
     <div class="modal-title">✅ Confirmer la demande</div>
     <div class="form-row">
       <label>Qui répond ?</label>
-      <select id="accepter-name" class="select-striped">
-        <option value="">-- Votre prénom --</option>
-      </select>
+      <select id="accepter-name" class="select-striped"><option value="">-- Votre prénom --</option></select>
     </div>
-    <button class="btn btn-green" style="width:100%;margin-top:8px;justify-content:center;" onclick="confirmAccept()">✅ Confirmer la disponibilité</button>
-    <button class="btn btn-outline" style="width:100%;margin-top:10px;justify-content:center;" onclick="closeAcceptModal()">Annuler</button>
+    <button class="btn btn-green" style="width:100%;margin-top:8px;justify-content:center;" id="confirm-accept-btn">✅ Confirmer la disponibilité</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:10px;justify-content:center;" id="close-accept-btn">Annuler</button>
   </div>
 </div>
 
-<!-- READY MODAL -->
 <div class="modal-overlay" id="ready-modal">
   <div class="modal">
     <div class="modal-title">📦 Prêt à remettre</div>
     <div class="form-row">
       <label>Qui répond ?</label>
-      <select id="readyer-name" class="select-striped">
-        <option value="">-- Votre prénom --</option>
-      </select>
+      <select id="readyer-name" class="select-striped"><option value="">-- Votre prénom --</option></select>
     </div>
-    <button class="btn btn-gold" style="width:100%;margin-top:8px;justify-content:center;" onclick="confirmReady()">📦 Marquer comme prête</button>
-    <button class="btn btn-outline" style="width:100%;margin-top:10px;justify-content:center;" onclick="closeReadyModal()">Annuler</button>
+    <button class="btn btn-gold" style="width:100%;margin-top:8px;justify-content:center;" id="confirm-ready-btn">📦 Marquer comme prête</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:10px;justify-content:center;" id="close-ready-btn">Annuler</button>
   </div>
 </div>
 
-<!-- TOAST -->
-<div id="toast"></div>
-
 <script>
-// ===== DATA =====
+// ===== DONNÉES =====
 const PHARMACIES = {
-  CARDINET:    { name: 'Cardinet',    email: 'ordopharma17@gmail.com',  color: '#461E96' },
-  ROCHECHOUART:{ name: 'Rochechouart',email: 'ordoparis9@gmail.com',    color: '#b07d20' },
-  STGEORGES:   { name: 'St-Georges', email: 'ordo@etik.com',            color: '#16a34a' },
-  FONTAINE:    { name: 'Fontaine',   email: 'pharmacie@etik.com',       color: '#dc2626' },
+  CARDINET:     { name: 'Cardinet',     email: 'ordopharma17@gmail.com', color: '#461E96' },
+  ROCHECHOUART: { name: 'Rochechouart', email: 'ordoparis9@gmail.com',   color: '#b07d20' },
+  STGEORGES:    { name: 'St-Georges',   email: 'ordo@etik.com',          color: '#16a34a' },
+  FONTAINE:     { name: 'Fontaine',     email: 'pharmacie@etik.com',     color: '#dc2626' },
 };
-
 
 const STAFF = {
   FONTAINE:     ['Alexandre','Anas','Elodie','Elone','Firas','Mehdi','Miguel','Muriel','Nadiia','Richesse','Samba','Sokhna','Thinhinan','Valentine','Viviane'],
@@ -1233,9 +1256,9 @@ const STAFF = {
 };
 
 const URGENCY_LABELS = {
-  urgent:   '🚨 Urgent — on passe le prendre',
-  mg:       '🤝 Non urgent — à donner à MG',
-  tomorrow: '📅 Non urgent — sera récupéré demain',
+  urgent:   '🚨 Urgent — on passe le prendre, merci de faire la facture',
+  tomorrow: '📅 Non urgent — sera récupéré ou déposé demain, merci de faire la facture',
+  patient:  '🚶 Patient(e) en route, merci de facturer directement au comptoir',
 };
 
 const REFUSE_LABELS = {
@@ -1244,161 +1267,131 @@ const REFUSE_LABELS = {
   pas_temps:  'Pas le temps',
 };
 
-let state = {
+const EJS = { pubkey: 'RGxtzwPpaFGcfktJJ', service: 'service_2924ccm', template: 'template_0r53ook' };
+
+// ===== STATE =====
+const state = {
   currentPharma: null,
   productLines: [],
   destPharma: null,
   urgency: null,
   demands: [],
   refusingDemandId: null,
-  emailjs: { pubkey: '', service: '', template: '' },
+  acceptingDemandId: null,
+  readyingDemandId: null,
 };
+
+// ===== STORAGE =====
+const Store = {
+  get(k)    { try { return localStorage.getItem(k); } catch(e) { try { return sessionStorage.getItem(k); } catch(e2) { return null; } } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch(e) { try { sessionStorage.setItem(k, v); } catch(e2) {} } },
+};
+
+// ===== FIREBASE =====
+function fbDb()    { return window._db; }
+function fbFns()   { return window._fbFns; }
+
+function startFirebaseListener() {
+  const db = fbDb();
+  if (!db) { setTimeout(startFirebaseListener, 500); return; }
+  const { collection, onSnapshot, query, orderBy } = fbFns();
+  const q = query(collection(db, 'demands'), orderBy('createdAt', 'desc'));
+  onSnapshot(q, (snap) => {
+    state.demands = snap.docs.map(d => Object.assign({ fbId: d.id }, d.data()));
+    const pending = state.demands.filter(d => d.to === state.currentPharma && d.status === 'pending').length;
+    if (pending > (window._lastPendingCount || 0)) { playNotif(); vibrateDevice([100,50,100]); }
+    window._lastPendingCount = pending;
+    const tab = document.querySelector('.nav-btn.active');
+    const active = tab ? tab.id.replace('nav-','') : 'new';
+    if (active === 'inbox')   renderInbox();
+    if (active === 'sent')    renderSent();
+    if (active === 'history') renderHistory();
+    updateInboxBadge();
+  });
+}
+
+async function fbAdd(data) {
+  const { collection, addDoc } = fbFns();
+  return addDoc(collection(fbDb(), 'demands'), data);
+}
+
+async function fbUpdate(fbId, data) {
+  const { doc, updateDoc } = fbFns();
+  return updateDoc(doc(fbDb(), 'demands', fbId), data);
+}
 
 // ===== INIT =====
 function init() {
-  const saved = Storage.get('retropharm_prefs');
+  const saved = Store.get('retropharm_prefs');
   if (saved) {
-    const parsed = JSON.parse(saved);
-    state.currentPharma = parsed.currentPharma || null;
-    state.emailjs = parsed.emailjs || { pubkey: '', service: '', template: '' };
+    try { const p = JSON.parse(saved); state.currentPharma = p.currentPharma || null; } catch(e) {}
   }
-
-  // Default EmailJS credentials (pre-filled)
-  const DEFAULT_EJS = { pubkey: 'RGxtzwPpaFGcfktJJ', service: 'service_2924ccm', template: 'template_0r53ook' };
-  if (!state.emailjs.pubkey) state.emailjs = DEFAULT_EJS;
-
-  // Restore emailjs config fields
-  document.getElementById('ejs-pubkey').value = state.emailjs.pubkey;
-  document.getElementById('ejs-service').value = state.emailjs.service;
-  document.getElementById('ejs-template').value = state.emailjs.template;
-
-  if (state.emailjs.pubkey) {
-    if (window.emailjs) window.emailjs.init(state.emailjs.pubkey);
-    document.getElementById('emailjs-config-card').style.display = 'none';
-    document.getElementById('emailjs-notice').style.display = 'none';
-  }
-
+  if (window.emailjs) window.emailjs.init(EJS.pubkey);
   updateCurrentPharmaLabel();
   addProductLine();
   renderDestChips();
   renderRequesterDropdown();
   checkPharmaWarning();
   updateInboxBadge();
-
   if (!state.currentPharma) setTimeout(openPharmaSelector, 400);
 }
 
-// Safe storage wrapper for iOS Safari (pharmacie identity + config only)
-const Storage = {
-  get(key) {
-    try { return localStorage.getItem(key); } catch(e) {}
-    try { return sessionStorage.getItem(key); } catch(e) {}
-    return Storage._mem[key] || null;
-  },
-  set(key, val) {
-    try { localStorage.setItem(key, val); return; } catch(e) {}
-    try { sessionStorage.setItem(key, val); return; } catch(e) {}
-    Storage._mem[key] = val;
-  },
-  _mem: {}
-};
-
-// Save only local prefs (identity + emailjs config) — demands live in Firebase
 function saveState() {
-  Storage.set('retropharm_prefs', JSON.stringify({
-    currentPharma: state.currentPharma,
-    emailjs: state.emailjs,
-  }));
+  Store.set('retropharm_prefs', JSON.stringify({ currentPharma: state.currentPharma }));
 }
 
-// ===== FIREBASE REALTIME LISTENER =====
-function startFirebaseListener() {
-  const { collection, onSnapshot, query, orderBy } = window._fbFns;
-  const db = window._db;
-  if (!db) { console.warn('Firebase not ready'); return; }
+// ===== PASSWORD =====
+const PWD_KEY = 'retropharm_auth';
+const PWD_TTL = 86400000;
 
-  const q = query(collection(db, 'demands'), orderBy('createdAt', 'desc'));
-  onSnapshot(q, (snapshot) => {
-    state.demands = snapshot.docs.map(d => ({ fbId: d.id, ...d.data() }));
-
-    // Detect new pending demands for current pharma → trigger sound/vibration
-    const pending = state.demands.filter(d => d.to === state.currentPharma && d.status === 'pending').length;
-    if (pending > lastKnownCount && lastKnownCount >= 0) {
-      playNotifSound();
-      vibrateDevice([100, 50, 100]);
-    }
-    lastKnownCount = pending;
-
-    updateInboxBadge();
-    // Refresh visible tab
-    if (document.getElementById('tab-inbox').style.display !== 'none') renderInbox();
-    if (document.getElementById('tab-sent').style.display !== 'none') renderSent();
-    if (document.getElementById('tab-history').style.display !== 'none') renderHistory();
-  });
-}
-
-// Add demand to Firebase
-async function fbAddDemand(demand) {
-  const { collection, addDoc } = window._fbFns;
-  const db = window._db;
-  const ref = await addDoc(collection(db, 'demands'), demand);
-  return ref.id;
-}
-
-// Update demand status in Firebase
-async function fbUpdateDemand(fbId, updates) {
-  const { doc, updateDoc } = window._fbFns;
-  const db = window._db;
-  await updateDoc(doc(db, 'demands', fbId), updates);
-}
-
-function saveEmailJSConfig() {
-  state.emailjs.pubkey = document.getElementById('ejs-pubkey').value.trim();
-  state.emailjs.service = document.getElementById('ejs-service').value.trim();
-  state.emailjs.template = document.getElementById('ejs-template').value.trim();
-  if (state.emailjs.pubkey && window.emailjs) window.emailjs.init(state.emailjs.pubkey);
-  saveState();
-}
-
-// ===== VIEW =====
-function setView(v) {
-  document.getElementById('btn-desktop').classList.toggle('active', v === 'desktop');
-  document.getElementById('btn-mobile').classList.toggle('active', v === 'mobile');
-  document.body.classList.toggle('mobile-view', v === 'mobile');
-  if (v === 'mobile') {
-    document.querySelector('.main').style.maxWidth = '420px';
+function checkPassword() {
+  const input = document.getElementById('pwd-input').value.trim();
+  const ok = (input.charCodeAt(0)===72 && input.charCodeAt(1)===111 &&
+               input.charCodeAt(2)===109 && input.charCodeAt(3)===101 &&
+               input.charCodeAt(4)===114 && input.length===5);
+  if (ok) {
+    Store.set(PWD_KEY, JSON.stringify({ ts: Date.now() }));
+    document.getElementById('password-screen').classList.add('hidden');
+    document.getElementById('pwd-error').textContent = '';
   } else {
-    document.querySelector('.main').style.maxWidth = '900px';
+    document.getElementById('pwd-error').textContent = '❌ Mot de passe incorrect';
+    document.getElementById('pwd-input').value = '';
+    document.getElementById('pwd-input').focus();
   }
 }
 
-// ===== AUTO DETECT DEVICE =====
-function autoDetectView() {
-  const isMobile = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-    || window.innerWidth < 768;
-  setView(isMobile ? 'mobile' : 'desktop');
+function checkAuth() {
+  try {
+    const saved = Store.get(PWD_KEY);
+    if (saved) {
+      const { ts } = JSON.parse(saved);
+      if (Date.now() - ts < PWD_TTL) {
+        document.getElementById('password-screen').classList.add('hidden');
+      }
+    }
+  } catch(e) {}
 }
 
 // ===== TABS =====
 function showTab(name) {
   ['new','inbox','sent','history'].forEach(t => {
-    document.getElementById('tab-'+t).style.display = t === name ? 'block' : 'none';
-    document.getElementById('nav-'+t).classList.toggle('active', t === name);
+    document.getElementById('tab-' + t).style.display = (t === name) ? 'block' : 'none';
+    document.getElementById('nav-' + t).classList.toggle('active', t === name);
   });
-  if (name === 'inbox') renderInbox();
-  if (name === 'sent') renderSent();
+  if (name === 'inbox')   renderInbox();
+  if (name === 'sent')    renderSent();
   if (name === 'history') renderHistory();
 }
 
-// ===== PHARMA SELECTOR =====
+// ===== PHARMA =====
 function openPharmaSelector() {
   const grid = document.getElementById('pharma-selector-grid');
-  grid.innerHTML = Object.entries(PHARMACIES).map(([key, p]) => `
-    <div class="pharma-option ${state.currentPharma === key ? 'selected' : ''}" onclick="selectPharma('${key}')">
-      <div class="name" style="color:${p.color}">${p.name}</div>
-      <div class="desc">${p.email}</div>
-    </div>
-  `).join('');
+  grid.innerHTML = Object.entries(PHARMACIES).map(([key, p]) => {
+    const sel = state.currentPharma === key ? 'selected' : '';
+    return '<div class="pharma-option ' + sel + '" data-pharma="' + key + '">' +
+      '<div class="name" style="color:' + p.color + '">' + p.name + '</div>' +
+      '<div class="desc">' + p.email + '</div></div>';
+  }).join('');
   document.getElementById('pharma-modal').classList.add('open');
 }
 
@@ -1407,90 +1400,99 @@ function selectPharma(key) {
   updateCurrentPharmaLabel();
   checkPharmaWarning();
   renderDestChips();
+  renderRequesterDropdown();
   saveState();
   document.getElementById('pharma-modal').classList.remove('open');
-  renderRequesterDropdown();
-  showToast(`✅ Connecté en tant que ${PHARMACIES[key].name}`, 'success');
-  updateInboxBadge();
 }
 
 function updateCurrentPharmaLabel() {
   const el = document.getElementById('current-pharma-label');
+  const dot = document.querySelector('.pharma-dot');
   if (state.currentPharma) {
-    el.textContent = PHARMACIES[state.currentPharma].name;
+    const p = PHARMACIES[state.currentPharma];
+    el.textContent = p.name;
+    if (dot) dot.style.background = p.color;
   } else {
     el.textContent = 'Choisir ma pharmacie';
+    if (dot) dot.style.background = '#ccc';
   }
 }
 
 function checkPharmaWarning() {
-  document.getElementById('no-pharma-warning').style.display = state.currentPharma ? 'none' : 'block';
-  document.getElementById('form-container').style.opacity = state.currentPharma ? '1' : '0.4';
-  document.getElementById('form-container').style.pointerEvents = state.currentPharma ? 'all' : 'none';
+  const w = document.getElementById('no-pharma-warning');
+  if (w) w.style.display = state.currentPharma ? 'none' : 'block';
 }
 
-// ===== PRODUCT LINES =====
+// ===== VIEW =====
+function setView(v) {
+  document.getElementById('app').classList.toggle('mobile-view', v === 'mobile');
+  document.getElementById('btn-desktop').classList.toggle('active', v === 'desktop');
+  document.getElementById('btn-mobile').classList.toggle('active', v === 'mobile');
+}
+
+// ===== FORM =====
+let lineId = 0;
+
 function addProductLine() {
-  const id = Date.now();
+  const id = ++lineId;
   state.productLines.push({ id, name: '', qty: 1 });
   renderProductLines();
 }
 
 function removeProductLine(id) {
-  if (state.productLines.length <= 1) return;
   state.productLines = state.productLines.filter(l => l.id !== id);
   renderProductLines();
 }
 
+function updateLine(id, field, val) {
+  const l = state.productLines.find(l => l.id === id);
+  if (!l) return;
+  if (field === 'qty' && val === '+') { l.freeQty = true; l.qty = 6; renderProductLines(); return; }
+  l[field] = val;
+}
+
+function toggleFreeQty(id) {
+  const l = state.productLines.find(l => l.id === id);
+  if (l) { l.freeQty = false; l.qty = 1; renderProductLines(); }
+}
+
 function renderProductLines() {
   const container = document.getElementById('product-lines');
-  container.innerHTML = state.productLines.map((line, i) => `
-    <div class="product-line">
-      <input type="text" placeholder="Nom du produit ${i+1}" value="${line.name}"
-        oninput="updateLine(${line.id}, 'name', this.value)">
-      <div class="qty-select-wrap">
-        <select class="select-striped" style="width:70px;padding:10px 6px;"
-          onchange="handleQtySelect(${line.id}, this)">
-          ${[1,2,3,4,5].map(n => `<option value="${n}" ${line.qty===n&&!line.freeQty?'selected':''}>${n}</option>`).join('')}
-          <option value="+" ${line.freeQty?'selected':''}>+</option>
-        </select>
-        ${line.freeQty ? `<input type="number" class="qty-free-input" min="1" max="999" value="${line.qty}"
-          oninput="updateLine(${line.id}, 'qty', parseInt(this.value)||1)" placeholder="Qté">` : ''}
-      </div>
-      <button class="remove-btn" onclick="removeProductLine(${line.id})">×</button>
-    </div>
-  `).join('');
+  container.innerHTML = state.productLines.map(l => {
+    return '<div class="product-line" id="pl-' + l.id + '">' +
+      '<input type="text" class="product-name-input" placeholder="Nom du produit" value="' + (l.name||'') + '" ' +
+      'oninput="updateLine(' + l.id + ',\'name\',this.value)">' +
+      (l.freeQty
+        ? '<input type="number" class="qty-input-free" min="1" value="' + (l.qty||1) + '" '
+          + 'oninput="updateLine(' + l.id + ',\'qty\',parseInt(this.value)||1)" '
+          + 'onblur="if(!this.value||this.value<1)this.value=1" style="width:64px;padding:6px 8px;">'
+          + '<button class="qty-back-btn" onclick="toggleFreeQty(' + l.id + ')" title="Revenir">↩</button>'
+        : '<select class="qty-select" onchange="updateLine(' + l.id + ',\'qty\',parseInt(this.value)||1)">' +
+          [1,2,3,4,5].map(n => '<option value="' + n + '"' + (l.qty===n?' selected':'') + '>' + n + '</option>').join('') +
+          '<option value="+">+</option>' +
+          '</select>'
+      ) +
+      '<button class="remove-btn" onclick="removeProductLine(' + l.id + ')">×</button>' +
+      '</div>';
+  }).join('');
 }
 
-function handleQtySelect(id, sel) {
-  const line = state.productLines.find(l => l.id === id);
-  if (!line) return;
-  if (sel.value === '+') {
-    line.freeQty = true;
-    line.qty = 6;
-  } else {
-    line.freeQty = false;
-    line.qty = parseInt(sel.value);
-  }
-  renderProductLines();
-}
-
-function updateLine(id, field, value) {
-  const line = state.productLines.find(l => l.id === id);
-  if (line) line[field] = value;
-}
-
-// ===== DEST CHIPS =====
 function renderDestChips() {
   const container = document.getElementById('dest-chips');
+  if (!container) return;
   container.innerHTML = Object.entries(PHARMACIES)
-    .filter(([key]) => key !== state.currentPharma)
-    .map(([key, p]) => `
-      <div class="chip ${state.destPharma === key ? 'selected' : ''}"
-           style="${state.destPharma === key ? `border-color:${p.color};color:${p.color};background:${p.color}22` : ''}"
-           onclick="selectDest('${key}')">${p.name}</div>
-    `).join('');
-  renderRequesterDropdown();
+    .filter(([k]) => k !== state.currentPharma)
+    .map(([key, p]) => {
+      const chk = state.destPharma === key ? ' checked' : '';
+      return '<label class="dest-radio-label" style="--chip-color:' + p.color + '">' +
+        '<input type="radio" name="dest-pharma" value="' + key + '"' + chk + ' onchange="selectDest(this.value)">' +
+        '<span>' + p.name + '</span>' +
+        '</label>';
+    }).join('');
+}
+
+function selectDest(key) {
+  state.destPharma = key;
 }
 
 function renderRequesterDropdown() {
@@ -1498,348 +1500,229 @@ function renderRequesterDropdown() {
   if (!sel) return;
   const members = state.currentPharma ? (STAFF[state.currentPharma] || []) : [];
   sel.innerHTML = '<option value="">-- Sélectionnez votre prénom --</option>' +
-    members.map((name, i) => `<option value="${name}" style="background:${i%2===0?'#f5f4ff':'#ffffff'}">${name}</option>`).join('');
+    members.map(n => '<option value="' + n + '">' + n + '</option>').join('');
 }
 
-function selectDest(key) {
-  state.destPharma = key;
-  renderDestChips();
-}
-
-// ===== URGENCY =====
 function selectUrgency(el) {
-  document.querySelectorAll('.urgency-option').forEach(e => e.classList.remove('selected'));
+  document.querySelectorAll('#urgency-options .urgency-option').forEach(e => e.classList.remove('selected'));
   el.classList.add('selected');
   state.urgency = el.dataset.value;
+  var pc = document.getElementById('patient-name-card');
+  if (pc) pc.style.display = (state.urgency === 'patient') ? 'block' : 'none';
+  if (state.urgency !== 'patient') { var pn = document.getElementById('patient-name'); if (pn) pn.value = ''; }
 }
 
 // ===== SUBMIT =====
 async function submitDemand() {
-  // Validation
   if (!state.currentPharma) { showToast('⚠️ Sélectionnez votre pharmacie', 'error'); return; }
-  if (!state.destPharma) { showToast('⚠️ Choisissez la pharmacie destinataire', 'error'); return; }
-  if (!state.urgency) { showToast('⚠️ Choisissez un mode de récupération', 'error'); return; }
-
+  const requester = document.getElementById('requester-name').value;
+  if (!requester) { showToast('⚠️ Sélectionnez votre prénom', 'error'); return; }
   const products = state.productLines.filter(l => l.name.trim());
   if (!products.length) { showToast('⚠️ Ajoutez au moins un produit', 'error'); return; }
-
-  const btn = document.getElementById('submit-btn');
+  // Lire le radio sélectionné (fallback si state pas à jour)
+  const checkedRadio = document.querySelector('input[name="dest-pharma"]:checked');
+  if (checkedRadio) state.destPharma = checkedRadio.value;
+  if (!state.destPharma) { showToast('⚠️ Choisissez la pharmacie destinataire', 'error'); return; }
+  if (!state.urgency) { showToast('⚠️ Choisissez un mode de récupération', 'error'); return; }
+  const patientName = document.getElementById('patient-name') ? document.getElementById('patient-name').value.trim() : '';
+  if (state.urgency === 'patient' && !patientName) { showToast('⚠️ Indiquez le nom du / de la patient(e)', 'error'); return; }
+  const note = document.getElementById('note').value.trim();
+  const now  = new Date().toISOString();
+  const id   = 'RET-' + Date.now().toString(36).toUpperCase();
+  const btn  = document.getElementById('submit-btn');
   btn.disabled = true;
-  btn.innerHTML = '<div class="spinner"></div><span>Envoi en cours...</span>';
-
-  const requester = document.getElementById('requester-name').value;
-  if (!requester) { showToast('⚠️ Sélectionnez votre prénom', 'error');
-    btn.disabled = false; btn.innerHTML = '<span>Envoyer la demande</span>'; return; }
-
-  const demand = {
-    id: 'D' + Date.now(),
-    from: state.currentPharma,
-    to: state.destPharma,
-    requester,
-    products: products.map(l => ({ name: l.name.trim(), qty: l.qty })),
-    urgency: state.urgency,
-    note: document.getElementById('note').value.trim(),
-    status: 'pending',
-    createdAt: new Date().toISOString(),
-    statusAt: null,
-    refuseReason: null,
-    readyAt: null,
-    responder: null,
-  };
-
-  // Send email
+  btn.querySelector('span').textContent = 'Envoi…';
   try {
+    const demand = { id, from: state.currentPharma, to: state.destPharma, patientName: patientName || null,
+      requester, products, urgency: state.urgency, note,
+      status: 'pending', createdAt: now, statusAt: null,
+      refuseReason: null, readyAt: null, responder: null, purged: false };
+    await fbAdd(demand);
     await sendEmail(demand);
-    showToast('✅ Demande envoyée avec succès !', 'success');
-    playNotifSound();
-    vibrateDevice([80]);
-  } catch (e) {
-    showToast('📧 Email non envoyé (config EmailJS ?). Demande créée localement.', 'error');
+    showToast('✅ Demande envoyée !', 'success');
+    launchConfetti(); vibrateDevice([50,30,80]);
+    state.productLines = []; lineId = 0; state.destPharma = null; state.urgency = null;
+    addProductLine();
+    renderDestChips();
+    document.querySelectorAll('#urgency-options .urgency-option').forEach(e => e.classList.remove('selected'));
+    document.getElementById('note').value = '';
+    var pn = document.getElementById('patient-name'); if (pn) pn.value = '';
+    var pc = document.getElementById('patient-name-card'); if (pc) pc.style.display = 'none';
+  } catch(err) {
+    showToast('❌ Erreur : ' + err.message, 'error');
   }
-
-  // Save demand to Firebase
-  try {
-    await fbAddDemand(demand);
-  } catch(e) {
-    console.error('Firebase write error:', e);
-    showToast('⚠️ Erreur de connexion Firebase', 'error');
-  }
-
-  // Reset form
-  state.productLines = [];
-  state.destPharma = null;
-  state.urgency = null;
-  document.getElementById('note').value = '';
-  document.getElementById('requester-name').value = '';
-  document.querySelectorAll('.urgency-option').forEach(e => e.classList.remove('selected'));
-  addProductLine();
-  renderDestChips();
-
   btn.disabled = false;
-  btn.innerHTML = '<span>Envoyer la demande</span>';
+  btn.querySelector('span').textContent = 'Envoyer la demande';
 }
 
-// ===== EMAIL =====
-async function sendEmail(demand) {
-  const cfg = state.emailjs;
-  if (!cfg.pubkey || !cfg.service || !cfg.template) throw new Error('EmailJS not configured');
-  if (!window.emailjs) throw new Error('EmailJS not loaded');
-  window.emailjs.init(cfg.pubkey);
-
-  const destPharm = PHARMACIES[demand.to];
-  const fromPharm = PHARMACIES[demand.from];
-  const productsText = demand.products.map(p => `• ${p.qty}x ${p.name}`).join('\n');
-  const urgencyText = URGENCY_LABELS[demand.urgency];
-
-  const message = `
-Nouvelle demande de rétrocession
-
-De : ${fromPharm.name}
-À : ${destPharm.name}
-
-Produits :
-${productsText}
-
-Mode de récupération : ${urgencyText}
-${demand.note ? `\nNote : ${demand.note}` : ''}
-
-Réf. demande : ${demand.id}
-Date : ${formatDate(demand.createdAt)}
-
-👉 Connectez-vous pour confirmer ou refuser la demande :
-https://mehdifqwqfq.github.io/RetrobyEtikPharma/
-  `.trim();
-
-  await window.emailjs.send(cfg.service, cfg.template, {
-    to_email: destPharm.email,
-    to_name: destPharm.name,
-    from_name: fromPharm.name,
-    subject: `[RétroPharm] Demande de ${fromPharm.name} — ${demand.products.length} produit(s)`,
-    message,
-  });
-}
-
-// Send notification back to requester pharmacy
-async function sendStatusEmail(demand, status, responder) {
-  const cfg = state.emailjs;
-  if (!cfg.pubkey || !cfg.service || !cfg.template) return;
-  if (!window.emailjs) return;
-  window.emailjs.init(cfg.pubkey);
-
-  const fromPharm = PHARMACIES[demand.from];
-  const toPharm = PHARMACIES[demand.to];
-  const productsText = demand.products.map(p => `• ${p.qty}x ${p.name}`).join('\n');
-
-  const isReady = status === 'ready';
-  const statusLabel = isReady ? '📦 PRÊTE À RÉCUPÉRER' : '✅ CONFIRMÉE';
-  const statusDetail = isReady
-    ? `La rétrocession est prête. Vous pouvez venir récupérer les produits.`
-    : `Votre demande a été confirmée. Les produits sont disponibles.`;
-
-  const message = `
-${statusLabel}
-
-Votre demande a été traitée par ${toPharm.name}.
-Pris en charge par : ${responder}
-
-Produits :
-${productsText}
-
-${statusDetail}
-
-Réf. demande : ${demand.id}
-
-👉 Voir le détail sur l'application :
-https://mehdifqwqfq.github.io/RetrobyEtikPharma/
-  `.trim();
-
-  try {
-    await window.emailjs.send(cfg.service, cfg.template, {
-      to_email: fromPharm.email,
-      to_name: fromPharm.name,
-      from_name: toPharm.name,
-      subject: `[RétroPharm] Votre demande est ${isReady ? 'prête 📦' : 'confirmée ✅'} — ${toPharm.name}`,
-      message,
-    });
-  } catch(e) {
-    console.warn('Status email failed:', e);
-  }
-}
-
-// Send refusal notification to requester pharmacy
-async function sendRefuseEmail(demand, reason, responder) {
-  const cfg = state.emailjs;
-  if (!cfg.pubkey || !cfg.service || !cfg.template) return;
-  if (!window.emailjs) return;
-  window.emailjs.init(cfg.pubkey);
-
-  const fromPharm = PHARMACIES[demand.from];
-  const toPharm = PHARMACIES[demand.to];
-  const productsText = demand.products.map(p => `• ${p.qty}x ${p.name}`).join('\n');
-  const reasonLabel = REFUSE_LABELS[reason] || reason;
-
-  const message = `
-❌ DEMANDE REFUSÉE
-
-Votre demande a été refusée par ${toPharm.name}.
-Pris en charge par : ${responder}
-Motif : ${reasonLabel}
-
-Produits concernés :
-${productsText}
-
-Réf. demande : ${demand.id}
-
-👉 Voir le détail sur l'application :
-https://mehdifqwqfq.github.io/RetrobyEtikPharma/
-  `.trim();
-
-  try {
-    await window.emailjs.send(cfg.service, cfg.template, {
-      to_email: fromPharm.email,
-      to_name: fromPharm.name,
-      from_name: toPharm.name,
-      subject: `[RétroPharm] Demande refusée ❌ — ${toPharm.name} (${reasonLabel})`,
-      message,
-    });
-  } catch(e) {
-    console.warn('Refuse email failed:', e);
-  }
-}
-
-// ===== INBOX =====
-let currentInboxFilter = 'all';
-
-function filterInbox(filter, el) {
-  currentInboxFilter = filter;
-  document.querySelectorAll('#inbox-filters .filter-chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  renderInbox();
-}
-
+// ===== RENDER INBOX =====
 function renderInbox() {
   if (!state.currentPharma) {
-    document.getElementById('inbox-list').innerHTML = '<div class="empty-state"><div class="icon">🏪</div><p>Sélectionnez votre pharmacie pour voir vos demandes reçues.</p></div>';
+    document.getElementById('inbox-list').innerHTML = '<div class="empty-state"><div class="icon">🏪</div><p>Sélectionnez votre pharmacie.</p></div>';
     return;
   }
-  let demands = state.demands.filter(d => d.to === state.currentPharma);
-  if (currentInboxFilter !== 'all') demands = demands.filter(d => d.status === currentInboxFilter);
-
-  if (!demands.length) {
-    document.getElementById('inbox-list').innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>Aucune demande dans cette catégorie.</p></div>';
-    return;
-  }
-  document.getElementById('inbox-list').innerHTML = demands.map(d => renderDemandCard(d, 'inbox')).join('');
+  const demands = state.demands.filter(d => d.to === state.currentPharma && !d.purged &&
+    (d.status === 'pending' || d.status === 'confirmed'));
+  document.getElementById('inbox-list').innerHTML = demands.length
+    ? demands.map(d => renderDemandCard(d, 'inbox')).join('')
+    : '<div class="empty-state"><div class="icon">📭</div><p>Aucune demande active.</p></div>';
 }
 
+// ===== RENDER SENT =====
 function renderSent() {
   if (!state.currentPharma) {
     document.getElementById('sent-list').innerHTML = '<div class="empty-state"><div class="icon">🏪</div><p>Sélectionnez votre pharmacie.</p></div>';
     return;
   }
-  const demands = state.demands.filter(d => d.from === state.currentPharma);
-  if (!demands.length) {
-    document.getElementById('sent-list').innerHTML = '<div class="empty-state"><div class="icon">📤</div><p>Aucune demande envoyée.</p></div>';
-    return;
-  }
-  document.getElementById('sent-list').innerHTML = demands.map(d => renderDemandCard(d, 'sent')).join('');
+  const demands = state.demands.filter(d => d.from === state.currentPharma && !d.purged &&
+    (d.status === 'pending' || d.status === 'confirmed'));
+  document.getElementById('sent-list').innerHTML = demands.length
+    ? demands.map(d => renderDemandCard(d, 'sent')).join('')
+    : '<div class="empty-state"><div class="icon">📤</div><p>Aucune demande active.</p></div>';
 }
 
+// ===== RENDER CARD =====
 function renderDemandCard(d, mode) {
   const from = PHARMACIES[d.from];
-  const to = PHARMACIES[d.to];
-  const statusHTML = getStatusBadge(d.status, d.refuseReason);
-  const urgencyClass = d.urgency === 'urgent' ? 'urgency-urgent' : d.urgency === 'mg' ? 'urgency-mg' : 'urgency-tomorrow';
-
-  let actionsHTML = '';
+  const to   = PHARMACIES[d.to];
+  const badge = getStatusBadge(d.status, d.refuseReason);
+  const urg   = d.urgency === 'urgent' ? 'urgency-urgent' : d.urgency === 'mg' ? 'urgency-mg' : 'urgency-tomorrow';
+  const urgLabel = d.urgency === 'urgent' ? '🚨 Urgent' : d.urgency === 'mg' ? '🤝 MG' : '📅 Demain';
+  let actions = '';
   if (mode === 'inbox') {
-    if (d.status === 'pending') {
-      actionsHTML = `
-        <button class="btn btn-green btn-sm" onclick="openAcceptModal('${d.id}')">✅ Confirmer</button>
-        <button class="btn btn-red btn-sm" onclick="openRefuseModal('${d.id}')">❌ Refuser</button>
-      `;
-    } else if (d.status === 'confirmed') {
-      actionsHTML = `<button class="btn btn-gold btn-sm" onclick="openReadyModal('${d.id}')">📦 Prêt à remettre</button>`;
-    }
+    if (d.status === 'pending')
+      actions = '<button class="btn btn-green btn-sm" onclick="openAcceptModal(\'' + d.id + '\')">✅ Confirmer</button>' +
+                '<button class="btn btn-red btn-sm" onclick="openRefuseModal(\'' + d.id + '\')">❌ Refuser</button>';
+    else if (d.status === 'confirmed')
+      actions = '<button class="btn btn-gold btn-sm" onclick="openReadyModal(\'' + d.id + '\')">📦 Prêt à remettre</button>';
   }
-
-  return `
-    <div class="demand-card status-${d.status}" id="card-${d.id}">
-      <div class="demand-header">
-        <div>
-          <div class="demand-route">
-            <strong style="color:${from.color}">${from.name}</strong>
-            ${d.requester ? `<span style="color:var(--text3);font-size:11px;"> (${d.requester})</span>` : ''}
-            <span style="color:var(--text3)"> → </span>
-            <strong style="color:${to.color}">${to.name}</strong>
-            ${d.responder ? `<span style="color:var(--text3);font-size:11px;"> (${d.responder})</span>` : ''}
-          </div>
-          <div class="demand-time">${formatDate(d.createdAt)}</div>
-        </div>
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
-          ${statusHTML}
-          <span class="demand-urgency ${urgencyClass}">${d.urgency === 'urgent' ? '🚨 Urgent' : d.urgency === 'mg' ? '🤝 MG' : '📅 Demain'}</span>
-        </div>
-      </div>
-      <div class="demand-products">
-        ${d.products.map(p => `
-          <div class="demand-product">
-            <span class="demand-qty">×${p.qty}</span>
-            <span>${p.name}</span>
-          </div>
-        `).join('')}
-      </div>
-      ${d.note ? `<div style="font-size:12px;color:var(--text3);font-style:italic;margin-bottom:8px;">💬 ${d.note}</div>` : ''}
-      <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;">Réf. ${d.id}</div>
-      ${actionsHTML ? `<div class="demand-actions">${actionsHTML}</div>` : ''}
-    </div>
-  `;
+  return '<div class="demand-card status-' + d.status + '" id="card-' + d.id + '">' +
+    '<div class="demand-header">' +
+      '<div>' +
+        '<div class="demand-route">' +
+          '<strong style="color:' + from.color + '">' + from.name + '</strong>' +
+          (d.requester ? '<span style="color:var(--text3);font-size:11px;"> (' + d.requester + ')</span>' : '') +
+          '<span style="color:var(--text3)"> → </span>' +
+          '<strong style="color:' + to.color + '">' + to.name + '</strong>' +
+          (d.responder ? '<span style="color:var(--text3);font-size:11px;"> (' + d.responder + ')</span>' : '') +
+        '</div>' +
+        '<div class="demand-time">' + formatDate(d.createdAt) + '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">' +
+        badge + '<span class="demand-urgency ' + urg + '">' + urgLabel + '</span>' +
+      '</div>' +
+    '</div>' +
+    '<div class="demand-products">' +
+      d.products.map(p => '<div class="demand-product"><span class="demand-qty">×' + p.qty + '</span><span>' + p.name + '</span></div>').join('') +
+    '</div>' +
+    (d.patientName ? '<div style="font-size:12px;color:var(--gold2);font-weight:600;margin-bottom:4px;">🧑‍⚕️ Patient : ' + d.patientName + '</div>' : '') +
+    (d.note ? '<div style="font-size:12px;color:var(--text3);font-style:italic;margin-bottom:8px;">💬 ' + d.note + '</div>' : '') +
+    '<div style="font-size:11px;color:var(--text3);font-family:\'DM Mono\',monospace;">Réf. ' + d.id + '</div>' +
+    (actions ? '<div class="demand-actions">' + actions + '</div>' : '') +
+    '</div>';
 }
 
+// ===== HISTORY =====
+let historyFilter = 'all';
+
+function filterHistory(filter, el) {
+  historyFilter = filter;
+  document.querySelectorAll('#history-filters .filter-chip').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderHistory();
+}
+
+function toggleHistoryItem(id) {
+  const el = document.getElementById('hist-' + id);
+  if (el) el.classList.toggle('expanded');
+}
+
+async function purgeClosedDemands() {
+  const closed = state.demands.filter(d => d.status === 'ready' || d.status === 'refused');
+  if (!closed.length) { showToast('Aucune demande clôturée à purger.', ''); return; }
+  if (!confirm('Purger ' + closed.length + ' demande(s) clôturée(s) ?')) return;
+  for (const d of closed) { await fbUpdate(d.fbId, { purged: true }); }
+  showToast('🗑 ' + closed.length + ' demande(s) purgées.', 'success');
+}
+
+function renderHistory() {
+  let list = [...state.demands];
+  if (historyFilter !== 'all') list = list.filter(d => d.status === historyFilter);
+  list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  if (!list.length) {
+    document.getElementById('history-list').innerHTML = '<div class="empty-state"><div class="icon">📚</div><p>Aucune demande archivée.</p></div>';
+    return;
+  }
+  document.getElementById('history-list').innerHTML = list.map(d => {
+    const from = PHARMACIES[d.from];
+    const to   = PHARMACIES[d.to];
+    const dateShort = new Date(d.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+    const firstP = d.products.length ? (d.products[0].qty + '× ' + d.products[0].name + (d.products.length > 1 ? ' +' + (d.products.length-1) : '')) : '';
+    const badge  = getStatusBadge(d.status, d.refuseReason);
+    return '<div class="history-item status-' + d.status + '" id="hist-' + d.id + '" onclick="toggleHistoryItem(\'' + d.id + '\')">' +
+      '<div class="history-collapsed">' +
+        '<span class="h-date">' + dateShort + '</span>' +
+        '<span class="h-route">' +
+          '<strong style="color:' + from.color + '">' + from.name + '</strong>' +
+          '<span style="color:var(--text3)"> → </span>' +
+          '<strong style="color:' + to.color + '">' + to.name + '</strong>' +
+        '</span>' +
+        '<span class="h-product">' + firstP + '</span>' +
+        badge +
+        '<span class="h-chevron">▼</span>' +
+      '</div>' +
+      '<div class="history-expanded">' +
+        '<div class="history-meta">' + formatDate(d.createdAt) + ' · ' + d.id + '</div>' +
+        '<div class="history-summary">' +
+          '<strong style="color:' + from.color + '">' + from.name + '</strong>' +
+          (d.requester ? '<span style="color:var(--text3);font-size:11px;"> (' + d.requester + ')</span>' : '') +
+          '<span style="color:var(--text3)"> → </span>' +
+          '<strong style="color:' + to.color + '">' + to.name + '</strong>' +
+          (d.responder ? '<span style="color:var(--text3);font-size:11px;"> (' + d.responder + ')</span>' : '') +
+        '</div>' +
+        '<div class="history-products">' + d.products.map(p => p.qty + '× ' + p.name).join(' · ') + '</div>' +
+        (d.patientName ? '<div style="font-size:12px;color:var(--gold2);font-weight:600;margin-top:4px;">🧑‍⚕️ Patient : ' + d.patientName + '</div>' : '') +
+        (d.note ? '<div style="font-size:12px;color:var(--text3);font-style:italic;margin-top:4px;">💬 ' + d.note + '</div>' : '') +
+        '<div style="margin-top:6px;font-size:11px;color:var(--text3);">' + (URGENCY_LABELS[d.urgency]||'') + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// ===== STATUS BADGE =====
 function getStatusBadge(status, reason) {
-  const labels = {
-    pending: ['status-pending', '⏳ En attente'],
+  const map = {
+    pending:   ['status-pending',   '⏳ En attente'],
     confirmed: ['status-confirmed', '✅ Confirmée'],
-    ready: ['status-ready', '📦 Prête'],
-    refused: ['status-refused', '❌ Refusée' + (reason ? ` (${REFUSE_LABELS[reason]})` : '')],
+    ready:     ['status-ready',     '📦 Prête'],
+    refused:   ['status-refused',   '❌ Refusée' + (reason ? ' (' + REFUSE_LABELS[reason] + ')' : '')],
   };
-  const [cls, label] = labels[status] || labels.pending;
-  return `<span class="status-badge ${cls}">${label}</span>`;
+  const [cls, label] = map[status] || map.pending;
+  return '<span class="status-badge ' + cls + '">' + label + '</span>';
 }
 
-// ===== ACTIONS =====
-function populateResponderSelect(selId) {
-  const sel = document.getElementById(selId);
-  const members = state.currentPharma ? (STAFF[state.currentPharma] || []) : [];
-  sel.innerHTML = '<option value="">-- Votre prénom --</option>' +
-    members.map((name, i) => `<option value="${name}" style="background:${i%2===0?'#f5f4ff':'#ffffff'}">${name}</option>`).join('');
-}
-
-// ACCEPT
-let acceptingDemandId = null;
+// ===== ACCEPT =====
 function openAcceptModal(id) {
-  acceptingDemandId = id;
+  state.acceptingDemandId = id;
   populateResponderSelect('accepter-name');
   document.getElementById('accept-modal').classList.add('open');
 }
 function closeAcceptModal() {
   document.getElementById('accept-modal').classList.remove('open');
-  acceptingDemandId = null;
+  state.acceptingDemandId = null;
 }
 async function confirmAccept() {
   const responder = document.getElementById('accepter-name').value;
   if (!responder) { showToast('⚠️ Sélectionnez votre prénom', 'error'); return; }
-  const d = state.demands.find(d => d.id === acceptingDemandId);
+  const d = state.demands.find(d => d.id === state.acceptingDemandId);
   if (!d) return;
-  await fbUpdateDemand(d.fbId, { status: 'confirmed', statusAt: new Date().toISOString(), responder });
-  closeAcceptModal();
-  launchConfetti();
-  vibrateDevice([50, 30, 80]);
-  showToast(`✅ Confirmé par ${responder}`, 'success');
+  await fbUpdate(d.fbId, { status: 'confirmed', statusAt: new Date().toISOString(), responder });
+  closeAcceptModal(); launchConfetti(); vibrateDevice([50,30,80]);
+  showToast('✅ Confirmé par ' + responder, 'success');
   sendStatusEmail(d, 'confirmed', responder);
 }
 
-// REFUSE
+// ===== REFUSE =====
 function openRefuseModal(id) {
   state.refusingDemandId = id;
   populateResponderSelect('responder-name');
@@ -1854,63 +1737,103 @@ async function confirmRefuse(reason) {
   if (!responder) { showToast('⚠️ Sélectionnez votre prénom', 'error'); return; }
   const d = state.demands.find(d => d.id === state.refusingDemandId);
   if (!d) return;
-  await fbUpdateDemand(d.fbId, { status: 'refused', refuseReason: reason, statusAt: new Date().toISOString(), responder });
+  await fbUpdate(d.fbId, { status: 'refused', refuseReason: reason, statusAt: new Date().toISOString(), responder });
   closeRefuseModal();
-  showToast(`Refusé par ${responder} : ` + REFUSE_LABELS[reason], 'error');
+  showToast('Refusé par ' + responder + ' : ' + REFUSE_LABELS[reason], 'error');
   sendRefuseEmail(d, reason, responder);
 }
 
-// READY
-let readyingDemandId = null;
+// ===== READY =====
 function openReadyModal(id) {
-  readyingDemandId = id;
+  state.readyingDemandId = id;
   populateResponderSelect('readyer-name');
   document.getElementById('ready-modal').classList.add('open');
 }
 function closeReadyModal() {
   document.getElementById('ready-modal').classList.remove('open');
-  readyingDemandId = null;
+  state.readyingDemandId = null;
 }
 async function confirmReady() {
   const responder = document.getElementById('readyer-name').value;
   if (!responder) { showToast('⚠️ Sélectionnez votre prénom', 'error'); return; }
-  const d = state.demands.find(d => d.id === readyingDemandId);
+  const d = state.demands.find(d => d.id === state.readyingDemandId);
   if (!d) return;
-  await fbUpdateDemand(d.fbId, { status: 'ready', readyAt: new Date().toISOString(), responder });
-  closeReadyModal();
-  launchConfetti();
-  vibrateDevice([50, 30, 80]);
-  showToast(`📦 Prêt — confirmé par ${responder}`, 'success');
+  await fbUpdate(d.fbId, { status: 'ready', readyAt: new Date().toISOString(), responder });
+  closeReadyModal(); launchConfetti(); vibrateDevice([50,30,80]);
+  showToast('📦 Prêt — confirmé par ' + responder, 'success');
   sendStatusEmail(d, 'ready', responder);
 }
 
-// ===== HISTORY =====
-function renderHistory() {
-  if (!state.demands.length) {
-    document.getElementById('history-list').innerHTML = '<div class="empty-state"><div class="icon">📚</div><p>Aucune demande archivée pour le moment.</p></div>';
-    return;
-  }
-  document.getElementById('history-list').innerHTML = state.demands.map(d => {
-    const from = PHARMACIES[d.from];
-    const to = PHARMACIES[d.to];
-    return `
-      <div class="history-item status-${d.status}">
-        <div>
-          <div class="history-meta">${formatDate(d.createdAt)} · ${d.id}</div>
-          <div class="history-summary">
-            <strong style="color:${from.color}">${from.name}</strong>
-            ${d.requester ? `<span style="color:var(--text3);font-size:11px;"> (${d.requester})</span>` : ''}
-            <span style="color:var(--text3)"> → </span>
-            <strong style="color:${to.color}">${to.name}</strong>
-            ${d.responder ? `<span style="color:var(--text3);font-size:11px;"> (${d.responder})</span>` : ''}
-          </div>
-          <div class="history-products">${d.products.map(p => `${p.qty}× ${p.name}`).join(' · ')}</div>
-          <div style="margin-top:6px;font-size:11px;color:var(--text3);">${URGENCY_LABELS[d.urgency]}</div>
-        </div>
-        <div>${getStatusBadge(d.status, d.refuseReason)}</div>
-      </div>
-    `;
-  }).join('');
+// ===== RESPONDER SELECT =====
+function populateResponderSelect(selId) {
+  const sel = document.getElementById(selId);
+  const members = state.currentPharma ? (STAFF[state.currentPharma] || []) : [];
+  sel.innerHTML = '<option value="">-- Votre prénom --</option>' +
+    members.map(n => '<option value="' + n + '">' + n + '</option>').join('');
+}
+
+// ===== EMAILS =====
+async function sendEmail(demand) {
+  if (!window.emailjs) return;
+  window.emailjs.init(EJS.pubkey);
+  const from = PHARMACIES[demand.from];
+  const to   = PHARMACIES[demand.to];
+  const prods = demand.products.map(p => '• ' + p.qty + 'x ' + p.name).join('\n');
+  const msg = 'Nouvelle demande de rétrocession\n\nDe : ' + from.name + '\nÀ : ' + to.name +
+    '\n\nProduits :\n' + prods + '\n\nMode : ' + URGENCY_LABELS[demand.urgency] +
+    (demand.patientName ? '\n\n👤 Patient(e) : ' + demand.patientName : '') +
+    (demand.note ? '\n\nNote : ' + demand.note : '') +
+    '\n\nRéf. ' + demand.id + '\n\nhttps://mehdifqwqfq.github.io/RetrobyEtikPharma/';
+  try {
+    await window.emailjs.send(EJS.service, EJS.template, {
+      to_email: to.email, to_name: to.name, from_name: from.name,
+      subject: '[RétroPharm] Demande de ' + from.name + ' — ' + demand.products.length + ' produit(s)',
+      message: msg,
+    });
+  } catch(e) { console.warn('Email failed:', e); }
+}
+
+async function sendStatusEmail(demand, status, responder) {
+  if (!window.emailjs) return;
+  window.emailjs.init(EJS.pubkey);
+  const from = PHARMACIES[demand.from];
+  const to   = PHARMACIES[demand.to];
+  const prods = demand.products.map(p => '• ' + p.qty + 'x ' + p.name).join('\n');
+  const isReady = status === 'ready';
+  const label = isReady ? '📦 PRÊTE À RÉCUPÉRER' : '✅ CONFIRMÉE';
+  const detail = isReady ? 'La rétrocession est prête. Vous pouvez venir récupérer les produits.'
+                         : 'Votre demande a été confirmée. Les produits sont disponibles.';
+  const msg = label + '\n\nVotre demande a été traitée par ' + to.name +
+    '.\nPris en charge par : ' + responder + '\n\nProduits :\n' + prods +
+    '\n\n' + detail + '\n\nRéf. ' + demand.id +
+    '\n\nhttps://mehdifqwqfq.github.io/RetrobyEtikPharma/';
+  try {
+    await window.emailjs.send(EJS.service, EJS.template, {
+      to_email: from.email, to_name: from.name, from_name: to.name,
+      subject: '[RétroPharm] Votre demande est ' + (isReady ? 'prête 📦' : 'confirmée ✅') + ' — ' + to.name,
+      message: msg,
+    });
+  } catch(e) { console.warn('Status email failed:', e); }
+}
+
+async function sendRefuseEmail(demand, reason, responder) {
+  if (!window.emailjs) return;
+  window.emailjs.init(EJS.pubkey);
+  const from = PHARMACIES[demand.from];
+  const to   = PHARMACIES[demand.to];
+  const prods = demand.products.map(p => '• ' + p.qty + 'x ' + p.name).join('\n');
+  const reasonLabel = REFUSE_LABELS[reason] || reason;
+  const msg = '❌ DEMANDE REFUSÉE\n\nVotre demande a été refusée par ' + to.name +
+    '.\nPris en charge par : ' + responder + '\nMotif : ' + reasonLabel +
+    '\n\nProduits :\n' + prods + '\n\nRéf. ' + demand.id +
+    '\n\nhttps://mehdifqwqfq.github.io/RetrobyEtikPharma/';
+  try {
+    await window.emailjs.send(EJS.service, EJS.template, {
+      to_email: from.email, to_name: from.name, from_name: to.name,
+      subject: '[RétroPharm] Demande refusée ❌ — ' + to.name + ' (' + reasonLabel + ')',
+      message: msg,
+    });
+  } catch(e) { console.warn('Refuse email failed:', e); }
 }
 
 // ===== BADGE =====
@@ -1920,279 +1843,114 @@ function updateInboxBadge() {
   const badge = document.getElementById('inbox-badge');
   badge.textContent = count;
   badge.style.display = count > 0 ? 'inline-flex' : 'none';
-  updateTitleBadge();
+  document.title = count > 0 ? '(' + count + ') RétroPharm' : 'RétroPharm';
 }
 
 // ===== UTILS =====
 function formatDate(iso) {
   const d = new Date(iso);
-  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
-    + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' +
+         d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 }
 
-function showToast(msg, type = '') {
+function showToast(msg, type) {
   const el = document.getElementById('toast');
   el.textContent = msg;
-  el.className = 'show ' + type;
+  el.className = 'show ' + (type || '');
   setTimeout(() => el.classList.remove('show'), 3500);
-}
-
-// Close modal on overlay click
-document.getElementById('pharma-modal').addEventListener('click', function(e) {
-  if (e.target === this) this.classList.remove('open');
-});
-document.getElementById('refuse-modal').addEventListener('click', function(e) {
-  if (e.target === this) closeRefuseModal();
-});
-document.getElementById('accept-modal').addEventListener('click', function(e) {
-  if (e.target === this) closeAcceptModal();
-});
-document.getElementById('ready-modal').addEventListener('click', function(e) {
-  if (e.target === this) closeReadyModal();
-});
-
-// ===== GRAFFITI WALL =====
-function initGraffiti() {
-  const canvas = document.getElementById('graffiti-canvas');
-  const ctx = canvas.getContext('2d');
-
-  const phrases = [
-    "I ❤️ Fontaine",
-    "I ❤️ Cardinet",
-    "I ❤️ Rochechouart",
-    "La vie est belle",
-    "Ensemble plus fort",
-    "Ton sourire est un médicament",
-    "Parce que ça vaut le coup",
-    "Love is everywhere",
-    "Shake it off",
-    "I ❤️ Fontaine",
-    "I ❤️ Cardinet",
-    "I ❤️ Rochechouart",
-    "La vie est belle",
-    "Ensemble plus fort",
-    "Ton sourire est un médicament",
-    "Parce que ça vaut le coup",
-    "Love is everywhere",
-    "Shake it off",
-  ];
-
-  const colors = [
-    'rgba(70,30,150,0.13)',
-    'rgba(108,63,212,0.10)',
-    'rgba(70,30,150,0.08)',
-    'rgba(180,140,255,0.09)',
-    'rgba(100,70,200,0.11)',
-    'rgba(140,90,220,0.08)',
-  ];
-
-  const fonts = ['Caveat', 'Permanent Marker'];
-
-  let items = [];
-
-  function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    placeItems();
-    draw();
-  }
-
-  function placeItems() {
-    items = [];
-    const cols = Math.floor(canvas.width / 280);
-    const rows = Math.floor(canvas.height / 100) + 2;
-    const usedPhrases = [...phrases];
-    // shuffle
-    for (let i = usedPhrases.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [usedPhrases[i], usedPhrases[j]] = [usedPhrases[j], usedPhrases[i]];
-    }
-
-    let idx = 0;
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < cols; col++) {
-        const phrase = usedPhrases[idx % usedPhrases.length];
-        idx++;
-        const x = col * (canvas.width / cols) + Math.random() * 60 - 30;
-        const y = row * (canvas.height / rows) + Math.random() * 40 + 40;
-        const angle = (Math.random() - 0.5) * 0.35;
-        const size = Math.floor(Math.random() * 10 + 16);
-        const color = colors[Math.floor(Math.random() * colors.length)];
-        const font = fonts[Math.floor(Math.random() * fonts.length)];
-        const weight = Math.random() > 0.5 ? '600' : '400';
-        items.push({ phrase, x, y, angle, size, color, font, weight });
-      }
-    }
-  }
-
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    items.forEach(item => {
-      ctx.save();
-      ctx.translate(item.x, item.y);
-      ctx.rotate(item.angle);
-      ctx.font = `${item.weight} ${item.size}px '${item.font}', cursive`;
-      ctx.fillStyle = item.color;
-      ctx.fillText(item.phrase, 0, 0);
-      ctx.restore();
-    });
-  }
-
-  window.addEventListener('resize', resize);
-  resize();
-}
-
-// ===== BOOT =====
-const QUOTES = [
-  "I ❤️ Fontaine",
-  "I ❤️ Cardinet",
-  "I ❤️ Rochechouart",
-  "La vie est belle",
-  "Ensemble plus fort",
-  "Ton sourire est un médicament",
-  "Parce que ça vaut le coup",
-  "Love is everywhere",
-  "Shake it off",
-];
-
-function setDailyQuote() {
-  // Pick a quote based on the day so it reste stable toute la journée
-  const dayIndex = Math.floor(Date.now() / 86400000) % QUOTES.length;
-  document.getElementById('daily-quote').textContent = QUOTES[dayIndex];
-}
-// ===== PASSWORD =====
-const PWD_KEY = 'retropharm_auth';
-const PWD_TTL = 86400000;
-
-function checkPassword() {
-  const input = document.getElementById('pwd-input').value.trim();
-  const ok = (input.charCodeAt(0)===72 && input.charCodeAt(1)===111 &&
-              input.charCodeAt(2)===109 && input.charCodeAt(3)===101 &&
-              input.charCodeAt(4)===114 && input.length===5);
-  if (ok) {
-    try { localStorage.setItem(PWD_KEY, JSON.stringify({ ts: Date.now() })); } catch(e) {
-      try { sessionStorage.setItem(PWD_KEY, JSON.stringify({ ts: Date.now() })); } catch(e2) {}
-    }
-    document.getElementById('password-screen').classList.add('hidden');
-    document.getElementById('pwd-error').textContent = '';
-  } else {
-    document.getElementById('pwd-error').textContent = '❌ Mot de passe incorrect';
-    document.getElementById('pwd-input').value = '';
-    document.getElementById('pwd-input').focus();
-  }
-}
-
-function checkAuth() {
-  try {
-    let saved = null;
-    try { saved = localStorage.getItem(PWD_KEY); } catch(e) {}
-    if (!saved) { try { saved = sessionStorage.getItem(PWD_KEY); } catch(e) {} }
-    if (saved) {
-      const { ts } = JSON.parse(saved);
-      if (Date.now() - ts < PWD_TTL) {
-        document.getElementById('password-screen').classList.add('hidden');
-        return;
-      }
-    }
-  } catch(e) {}
-}
-
-checkAuth();
-setDailyQuote();
-init();
-autoDetectView();
-initGraffiti();
-setTimeout(startFirebaseListener, 800);
-
-// ===== CONFETTI =====
-function launchConfetti() {
-  const canvas = document.getElementById('confetti-canvas');
-  const ctx = canvas.getContext('2d');
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  canvas.classList.add('active');
-
-  const colors = ['#461E96','#6c3fd4','#a07ae8','#22c55e','#d4a853','#ef4444','#ffffff'];
-  const pieces = Array.from({length: 120}, () => ({
-    x: Math.random() * canvas.width,
-    y: -10 - Math.random() * 100,
-    r: 4 + Math.random() * 6,
-    color: colors[Math.floor(Math.random() * colors.length)],
-    vx: (Math.random() - 0.5) * 4,
-    vy: 2 + Math.random() * 4,
-    angle: Math.random() * Math.PI * 2,
-    va: (Math.random() - 0.5) * 0.2,
-    shape: Math.random() > 0.5 ? 'rect' : 'circle',
-  }));
-
-  let frame = 0;
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    pieces.forEach(p => {
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vy += 0.05;
-      p.angle += p.va;
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.rotate(p.angle);
-      ctx.fillStyle = p.color;
-      ctx.globalAlpha = Math.max(0, 1 - frame / 120);
-      if (p.shape === 'rect') {
-        ctx.fillRect(-p.r, -p.r / 2, p.r * 2, p.r);
-      } else {
-        ctx.beginPath();
-        ctx.arc(0, 0, p.r / 2, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-    });
-    frame++;
-    if (frame < 150) requestAnimationFrame(draw);
-    else {
-      canvas.classList.remove('active');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-  }
-  draw();
-}
-
-// ===== NOTIFICATION SOUND =====
-function playNotifSound() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.frequency.setValueAtTime(520, ctx.currentTime);
-    osc.frequency.setValueAtTime(660, ctx.currentTime + 0.1);
-    osc.frequency.setValueAtTime(800, ctx.currentTime + 0.18);
-    gain.gain.setValueAtTime(0.15, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.5);
-  } catch(e) {}
 }
 
 function vibrateDevice(pattern) {
   try { if (navigator.vibrate) navigator.vibrate(pattern); } catch(e) {}
 }
 
-// ===== TITLE BADGE =====
-function updateTitleBadge() {
-  if (!state.currentPharma) { document.title = 'RétroPharm'; return; }
-  const count = state.demands.filter(d => d.to === state.currentPharma && d.status === 'pending').length;
-  document.title = count > 0 ? `(${count}) RétroPharm` : 'RétroPharm';
+function playNotif() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(520, ctx.currentTime);
+    osc.frequency.setValueAtTime(660, ctx.currentTime + 0.1);
+    osc.frequency.setValueAtTime(800, ctx.currentTime + 0.18);
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.5);
+  } catch(e) {}
 }
 
-// ===== PWA INSTALL =====
+// ===== CONFETTI =====
+function launchConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx2 = canvas.getContext('2d');
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  canvas.style.display = 'block';
+  const pieces = Array.from({length: 80}, () => ({
+    x: Math.random() * canvas.width, y: -10,
+    r: Math.random() * 6 + 3,
+    d: Math.random() * 80 + 20,
+    color: ['#461E96','#C8922A','#4ade80','#f87171','#818cf8'][Math.floor(Math.random()*5)],
+    tilt: Math.random() * 10 - 10,
+    tiltAngle: 0, tiltSpeed: Math.random() * 0.07 + 0.05,
+    speed: Math.random() * 3 + 2,
+  }));
+  let frame = 0;
+  function draw() {
+    ctx2.clearRect(0, 0, canvas.width, canvas.height);
+    pieces.forEach(p => {
+      p.tiltAngle += p.tiltSpeed;
+      p.y += p.speed;
+      p.tilt = Math.sin(p.tiltAngle) * 12;
+      ctx2.beginPath();
+      ctx2.fillStyle = p.color;
+      ctx2.ellipse(p.x + p.tilt, p.y, p.r, p.r * 0.4, p.tiltAngle, 0, Math.PI * 2);
+      ctx2.fill();
+    });
+    frame++;
+    if (frame < 120) requestAnimationFrame(draw);
+    else { ctx2.clearRect(0, 0, canvas.width, canvas.height); canvas.style.display = 'none'; }
+  }
+  draw();
+}
+
+// ===== DAILY QUOTE =====
+const QUOTES = [
+  'I ❤️ Fontaine', 'I ❤️ Cardinet', 'I ❤️ Rochechouart',
+  'La vie est belle', 'Ensemble plus fort', 'Ton sourire est un médicament',
+  'Parce que ça vaut le coup', 'Love is everywhere', 'Shake it off',
+];
+function setDailyQuote() {
+  const el = document.getElementById('daily-quote');
+  if (el) el.textContent = QUOTES[Math.floor(Date.now() / 86400000) % QUOTES.length];
+}
+
+// ===== GRAFFITI WALL =====
+(function initGraffiti() {
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:0.04;';
+  document.body.insertBefore(canvas, document.body.firstChild);
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  const g = canvas.getContext('2d');
+  g.font = '18px "Caveat", cursive';
+  g.fillStyle = '#461E96';
+  const phrases = ['I ❤️ Fontaine','I ❤️ Cardinet','I ❤️ Rochechouart',
+    'La vie est belle','Ensemble plus fort','Ton sourire est un médicament',
+    'Parce que ça vaut le coup','Love is everywhere','Shake it off'];
+  for (let i = 0; i < 40; i++) {
+    g.save();
+    g.translate(Math.random()*canvas.width, Math.random()*canvas.height);
+    g.rotate((Math.random()-0.5)*0.4);
+    g.fillText(phrases[i % phrases.length], 0, 0);
+    g.restore();
+  }
+})();
+
+// ===== PWA =====
 let deferredInstallPrompt = null;
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   deferredInstallPrompt = e;
-  const banner = document.getElementById('install-banner');
-  if (!Storage.get('install_dismissed')) banner.classList.add('show');
+  if (!Store.get('install_dismissed')) document.getElementById('install-banner').classList.add('show');
 });
 function installPWA() {
   if (!deferredInstallPrompt) return;
@@ -2204,10 +1962,108 @@ function installPWA() {
 }
 function dismissInstall() {
   document.getElementById('install-banner').classList.remove('show');
-  Storage.set('install_dismissed', '1');
+  Store.set('install_dismissed', '1');
 }
 
-let lastKnownCount = 0; // used by Firebase listener
+// ===== EVENT BINDINGS =====
+function bindEvents() {
+  function on(id, ev, fn) { const el = document.getElementById(id); if (el) el.addEventListener(ev, fn); }
+  function delegate(id, sel, ev, fn) {
+    const el = document.getElementById(id) || document.querySelector(id);
+    if (el) el.addEventListener(ev, function(e) { const t = e.target.closest(sel); if (t) fn(t, e); });
+  }
+
+  // Password
+  on('pwd-input', 'keydown', e => { if (e.key === 'Enter') checkPassword(); });
+
+  // Nav
+  on('nav-new',     'click', () => showTab('new'));
+  on('nav-inbox',   'click', () => showTab('inbox'));
+  on('nav-sent',    'click', () => showTab('sent'));
+  on('nav-history', 'click', () => showTab('history'));
+
+  // Header
+  on('pharma-badge-btn', 'click', openPharmaSelector);
+  on('btn-desktop', 'click', () => setView('desktop'));
+  on('btn-mobile',  'click', () => setView('mobile'));
+
+  // PWA
+  on('install-pwa-btn',     'click', installPWA);
+  on('install-dismiss-btn', 'click', dismissInstall);
+
+  // Form
+  on('add-line-btn', 'click', addProductLine);
+  on('submit-btn',   'click', submitDemand);
+
+  // Urgency — delegation
+  delegate('urgency-options', '.urgency-option', 'click', el => selectUrgency(el));
+
+  // Dest chips — gérées par <input radio> + onchange, pas de délégation nécessaire
+
+  // History filters — delegation
+  delegate('history-filters', '[data-filter]', 'click', el => filterHistory(el.dataset.filter, el));
+  on('purge-btn', 'click', purgeClosedDemands);
+
+  // Pharma selector — delegation
+  delegate('pharma-selector-grid', '[data-pharma]', 'click', el => selectPharma(el.dataset.pharma));
+
+  // Modals
+  on('confirm-accept-btn', 'click', confirmAccept);
+  on('close-accept-btn',   'click', closeAcceptModal);
+  on('confirm-ready-btn',  'click', confirmReady);
+  on('close-ready-btn',    'click', closeReadyModal);
+  on('close-refuse-btn',   'click', closeRefuseModal);
+
+  // Refuse options — delegation
+  delegate('refuse-options', '[data-refuse]', 'click', el => confirmRefuse(el.dataset.refuse));
+
+  // Modal backdrop close
+  ['pharma-modal','refuse-modal','accept-modal','ready-modal'].forEach(id => {
+    on(id, 'click', function(e) {
+      if (e.target === this) {
+        this.classList.remove('open');
+        if (id === 'refuse-modal') closeRefuseModal();
+        if (id === 'accept-modal') closeAcceptModal();
+        if (id === 'ready-modal')  closeReadyModal();
+      }
+    });
+  });
+}
+
+// ===== EXPOSE AU SCOPE GLOBAL (requis pour onclick inline) =====
+window.checkPassword      = checkPassword;
+window.selectDest         = selectDest;
+window.selectUrgency      = selectUrgency;
+window.addProductLine     = addProductLine;
+window.removeProductLine  = removeProductLine;
+window.updateLine         = updateLine;
+window.submitDemand       = submitDemand;
+window.showTab            = showTab;
+window.openPharmaSelector = openPharmaSelector;
+window.selectPharma       = selectPharma;
+window.openAcceptModal    = openAcceptModal;
+window.closeAcceptModal   = closeAcceptModal;
+window.confirmAccept      = confirmAccept;
+window.openRefuseModal    = openRefuseModal;
+window.closeRefuseModal   = closeRefuseModal;
+window.confirmRefuse      = confirmRefuse;
+window.openReadyModal     = openReadyModal;
+window.closeReadyModal    = closeReadyModal;
+window.confirmReady       = confirmReady;
+window.filterHistory      = filterHistory;
+window.purgeClosedDemands = purgeClosedDemands;
+window.toggleHistoryItem  = toggleHistoryItem;
+window.setView            = setView;
+window.installPWA         = installPWA;
+window.dismissInstall     = dismissInstall;
+window.toggleFreeQty      = toggleFreeQty;
+
+// ===== BOOT =====
+checkAuth();
+bindEvents();
+init();
+startFirebaseListener();
+setDailyQuote();
 
 </script>
 </body>
