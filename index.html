@@ -1227,7 +1227,7 @@ const PHARMACIES = {
 
 const STAFF = {
   FONTAINE:     ['Alexandre','Anas','Elodie','Elone','Firas','Mehdi','Miguel','Muriel','Nadiia','Richesse','Samba','Sokhna','Thinhinan','Valentine','Viviane'],
-  ROCHECHOUART: ['Aïcha','Beyram','Latifa','Mehdi','Muriel','Nassim','Thinhinan'],
+  ROCHECHOUART: ['Aïcha','Alexandre','Beyram','Latifa','Mehdi','Muriel','Nassim','Thinhinan'],
   CARDINET:     ['Alan','Catherine','Claire','Doha','Jérôme','Nicolas'],
   STGEORGES:    ['Alessandra','Audrey'],
 };
@@ -1666,6 +1666,47 @@ https://mehdifqwqfq.github.io/RetrobyEtikPharma/
   }
 }
 
+// Send refusal notification to requester pharmacy
+async function sendRefuseEmail(demand, reason, responder) {
+  const cfg = state.emailjs;
+  if (!cfg.pubkey || !cfg.service || !cfg.template) return;
+  if (!window.emailjs) return;
+  window.emailjs.init(cfg.pubkey);
+
+  const fromPharm = PHARMACIES[demand.from];
+  const toPharm = PHARMACIES[demand.to];
+  const productsText = demand.products.map(p => `• ${p.qty}x ${p.name}`).join('\n');
+  const reasonLabel = REFUSE_LABELS[reason] || reason;
+
+  const message = `
+❌ DEMANDE REFUSÉE
+
+Votre demande a été refusée par ${toPharm.name}.
+Pris en charge par : ${responder}
+Motif : ${reasonLabel}
+
+Produits concernés :
+${productsText}
+
+Réf. demande : ${demand.id}
+
+👉 Voir le détail sur l'application :
+https://mehdifqwqfq.github.io/RetrobyEtikPharma/
+  `.trim();
+
+  try {
+    await window.emailjs.send(cfg.service, cfg.template, {
+      to_email: fromPharm.email,
+      to_name: fromPharm.name,
+      from_name: toPharm.name,
+      subject: `[RétroPharm] Demande refusée ❌ — ${toPharm.name} (${reasonLabel})`,
+      message,
+    });
+  } catch(e) {
+    console.warn('Refuse email failed:', e);
+  }
+}
+
 // ===== INBOX =====
 let currentInboxFilter = 'all';
 
@@ -1816,6 +1857,7 @@ async function confirmRefuse(reason) {
   await fbUpdateDemand(d.fbId, { status: 'refused', refuseReason: reason, statusAt: new Date().toISOString(), responder });
   closeRefuseModal();
   showToast(`Refusé par ${responder} : ` + REFUSE_LABELS[reason], 'error');
+  sendRefuseEmail(d, reason, responder);
 }
 
 // READY
