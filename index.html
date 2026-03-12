@@ -956,6 +956,7 @@ window._fbFns = { collection, addDoc, onSnapshot, doc, updateDoc, query, orderBy
     <div class="password-sub">Accès réservé au réseau de pharmacies</div>
     <div class="password-input-wrap">
       <input type="password" id="pwd-input" placeholder="Mot de passe"
+        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
         onkeydown="if(event.key==='Enter') checkPassword()">
       <button class="btn btn-primary" style="width:auto;padding:13px 20px;" onclick="checkPassword()">→</button>
     </div>
@@ -1969,7 +1970,7 @@ function setDailyQuote() {
   document.getElementById('daily-quote').textContent = QUOTES[dayIndex];
 }
 // ===== PASSWORD =====
-const PWD_HASH = '5a822346c733b8f8b97bbf05b99e1ac9'; // MD5("Homer")
+const PWD_HASH = '6808487b571183152e1d42e214d27a6f'; // MD5("Homer")
 const PWD_KEY = 'retropharm_auth';
 const PWD_TTL = 86400000; // 24h
 
@@ -1997,13 +1998,18 @@ a=n(a,A);b=n(b,B);c=n(c,C);d=n(d,D);}
 return he(a)+he(b)+he(c)+he(d);}
 
 function checkPassword() {
-  const input = document.getElementById('pwd-input').value;
-  if (md5(input) === PWD_HASH) {
-    Storage.set(PWD_KEY, JSON.stringify({ ts: Date.now() }));
+  const input = document.getElementById('pwd-input').value.trim();
+  const hash = md5(input);
+  if (hash === PWD_HASH) {
+    try {
+      localStorage.setItem(PWD_KEY, JSON.stringify({ ts: Date.now() }));
+    } catch(e) {
+      try { sessionStorage.setItem(PWD_KEY, JSON.stringify({ ts: Date.now() })); } catch(e2) {}
+    }
     document.getElementById('password-screen').classList.add('hidden');
     document.getElementById('pwd-error').textContent = '';
   } else {
-    document.getElementById('pwd-error').textContent = '❌ Mot de passe incorrect';
+    document.getElementById('pwd-error').textContent = '❌ Mot de passe incorrect — essayez "Homer"';
     document.getElementById('pwd-input').value = '';
     document.getElementById('pwd-input').focus();
   }
@@ -2011,7 +2017,9 @@ function checkPassword() {
 
 function checkAuth() {
   try {
-    const saved = Storage.get(PWD_KEY);
+    let saved = null;
+    try { saved = localStorage.getItem(PWD_KEY); } catch(e) {}
+    if (!saved) { try { saved = sessionStorage.getItem(PWD_KEY); } catch(e) {} }
     if (saved) {
       const { ts } = JSON.parse(saved);
       if (Date.now() - ts < PWD_TTL) {
